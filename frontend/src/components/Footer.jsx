@@ -13,7 +13,7 @@ const Footer = () => {
             store, we offer a wide range of genuine medicines, health
             supplements, and wellness products—all available at your fingertips.
           </p>
-        </div>
+        </div>                
       </div>
 
       {/* Bottom Section */}
@@ -23,12 +23,12 @@ const Footer = () => {
           <h3 className="text-lg font-semibold mb-4">Company</h3>
           <ul className="space-y-2 text-sm text-black">
             <li>
-              <a href="#" className="hover:text-black">
+              <a href="/about-us" className="hover:text-black">
                 About
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-black">
+              <a href="/testimonial" className="hover:text-black">
                 Customer Speak
               </a>
             </li>
@@ -38,7 +38,7 @@ const Footer = () => {
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-black">
+              <a href="/blog" className="hover:text-black">
                 Blogs
               </a>
             </li>
@@ -50,22 +50,22 @@ const Footer = () => {
           <h3 className="text-lg font-semibold mb-4">Our Policies</h3>
           <ul className="space-y-2 text-sm text-black">
             <li>
-              <a href="#" className="hover:text-black">
+              <a href="/terms-and-conditions" className="hover:text-black">
                 Terms & Conditions
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-black">
+              <a href="/privacy-policy" className="hover:text-black">
                 Privacy Policy
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-black">
+              <a href="/refund-policy" className="hover:text-black">
                 Refund Policy
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-black">
+              <a href="/faq" className="hover:text-black">
                 {" "}
                 FAQs
               </a>
