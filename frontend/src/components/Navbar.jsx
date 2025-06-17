@@ -12,15 +12,38 @@ import {
 import { useState, useEffect } from "react";
 import { MdAddShoppingCart } from "react-icons/md";
 import { NavigationMenuDemo } from "./ui/NavigationMenuDemo";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { BiSolidOffer } from "react-icons/bi";
+import { useRef } from "react";
 
 export default function NavbarMain() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [locations, setLocations] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState("");
+
   const { cartItems } = useCart();
+
+  const [user, setUser] = useState({
+  isLoggedIn: true, // toggle to false to simulate logout
+  name: "John Doe",
+});
+
+const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+
+//   const [locations, setLocations] = useState<string>([]);
+// const [selectedPincode, setSelectedPincode] = useState<string>("");
 
   // Calculate total items in cart
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -32,30 +55,34 @@ export default function NavbarMain() {
     { name: "Contact", link: "#contact" },
   ];
 
-  useEffect(() => {
-    console.log("Fetching locations from data.json...");
-    fetch("src/data.json")
-      .then((res) => res.json())
-      .then((data) => {
-        const unique = [];
-        const map = new Map();
-        data.Pincodes.forEach((item) => {
-          const key = `${item.City}-${item.State}`;
-          if (!map.has(key)) {
-            map.set(key, true);
-            unique.push({ city: item.City, state: item.State });
-          }
-        });
-        console.log("Unique locations loaded:", unique);
-        setLocations(unique);
-      })
-      .catch((err) => console.error("Failed to load locations:", err));
-  }, []);
+//   useEffect(() => {
+//   // 1. Load all unique pincodes
+//   fetch("http://localhost:3001/api/pincodes")
+//     .then((res) => res.json())
+//     .then((pincodes) => {
+//       setLocations(pincodes); // Dropdown options
+//     })
+//     .catch((err) => console.error("Failed to load pincodes:", err));
 
-  const handleLocationChange = (e) => {
-    setSelectedLocation(e.target.value);
-    console.log("Selected location:", e.target.value);
-  };
+//   // 2. Detect user's pincode from backend
+//   fetch("http://localhost:3001/api/detect-location")
+//     .then((res) => res.json())
+//     .then((data) => {
+//       if (data.pincode) {
+//         setSelectedPincode(data.pincode); // Auto-select this
+//       }
+//     })
+//     .catch((err) => console.warn("Location detection failed:", err));
+// }, []);
+
+
+
+
+ const handleLocationChange = (e) => {
+  setSelectedPincode(e.target.value);
+  console.log("Selected pincode:", e.target.value);
+};
+
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -72,20 +99,16 @@ export default function NavbarMain() {
               <div className="flex-1 flex justify-center">
                 <div className="flex items-center gap-4 w-full max-w-2xl">
 
-                  <select
-                    className="border rounded px-3 py-2 text-sm dark:bg-neutral-800 dark:text-white"
-                    value={selectedLocation}
-                    onChange={handleLocationChange}
-                  >
-                    <option value="" disabled>
-                      Deliver to
-                    </option>
-                    {locations.map((loc, idx) => (
-                      <option key={idx} value={`${loc.city},${loc.state},${loc.pincode}`}>
-                        {loc.city}
-                      </option>
-                    ))}
-                  </select>
+                 {/* <select value={selectedPincode} onChange={handleLocationChange}>
+  <option value="">Select Pincode</option>
+  {locations.map((pincode, idx) => (
+    <option key={idx} value={pincode}>
+      {pincode}
+    </option>
+  ))}
+</select> */}
+
+
 
                   <input
                     type="text"
@@ -113,7 +136,46 @@ export default function NavbarMain() {
                     </div>
                   </NavbarButton>
                 </Link>
-                <NavbarButton variant="secondary" className="text-l">Login / Register</NavbarButton>
+                {user.isLoggedIn ? (
+  <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className="flex items-center gap-2 text-l hover:text-blue-600"
+            >
+              {user.name}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md z-50">
+                <Link
+                  to="/profile"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsDropdownOpen(false)}
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={() => {
+                    setUser({ isLoggedIn: false });
+                    setIsDropdownOpen(false);
+                    Navigate("/"); 
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+) : (
+  <Link to='/login'>
+    <NavbarButton variant="secondary" className="text-l">Login</NavbarButton>
+  </Link>
+)}
+
               </div>
             </div>
 
@@ -179,16 +241,43 @@ export default function NavbarMain() {
                       </div>
                     </NavbarButton>
                   </Link>
-                  <NavbarButton
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      console.log("Login clicked (mobile)");
-                    }}
-                    variant="primary"
-                    className="w-full"
-                  >
-                    Login
-                  </NavbarButton>
+                  {user.isLoggedIn ? (
+  <>
+    <Link to="/profile">
+      <NavbarButton
+        onClick={() => setIsMobileMenuOpen(false)}
+        variant="primary"
+        className="w-full"
+      >
+        Profile
+      </NavbarButton>
+    </Link>
+    <NavbarButton
+      onClick={() => {
+        setUser({ isLoggedIn: false });
+        setIsMobileMenuOpen(false);
+      }}
+      variant="primary"
+      className="w-full"
+    >
+      Logout
+    </NavbarButton>
+  </>
+) : (
+  <Link to='/login'>
+    <NavbarButton
+      onClick={() => {
+        setIsMobileMenuOpen(false);
+        console.log("Login clicked (mobile)");
+      }}
+      variant="primary"
+      className="w-full"
+    >
+      Login
+    </NavbarButton>
+  </Link>
+)}
+
                 </div>
               </MobileNavMenu>
             </MobileNav>

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -23,24 +24,24 @@ const Footer = () => {
           <h3 className="text-lg font-semibold mb-4">Company</h3>
           <ul className="space-y-2 text-sm text-black">
             <li>
-              <a href="/about-us" className="hover:text-black">
+              <Link to="/about-us" className="hover:text-black">
                 About
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/testimonial" className="hover:text-black">
-                Customer Speak
-              </a>
+              <Link to="/testimonial" className="hover:text-black">
+                Words from Our Customers
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-black">
+              <Link to="/contact" className="hover:text-black">
                 Contact
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/blog" className="hover:text-black">
+              <Link to="/blog" className="hover:text-black">
                 Blogs
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
@@ -50,25 +51,25 @@ const Footer = () => {
           <h3 className="text-lg font-semibold mb-4">Our Policies</h3>
           <ul className="space-y-2 text-sm text-black">
             <li>
-              <a href="/terms-and-conditions" className="hover:text-black">
+              <Link to="/terms-and-conditions" className="hover:text-black">
                 Terms & Conditions
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/privacy-policy" className="hover:text-black">
+              <Link to="/privacy-policy" className="hover:text-black">
                 Privacy Policy
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/refund-policy" className="hover:text-black">
-                Refund Policy
-              </a>
+              <Link to="/return-and-refund-policy" className="hover:text-black">
+                Return & Refund Policy
+              </Link>
             </li>
             <li>
-              <a href="/faq" className="hover:text-black">
+              <Link to="/faq" className="hover:text-black">
                 {" "}
                 FAQs
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
@@ -122,16 +123,16 @@ const Footer = () => {
 
       {/* Bottom note */}
       <div className="text-center text-gray-400 text-xs mt-10">
-        &copy; {new Date().getFullYear()} My Website. All rights reserved.
+        &copy; {new Date().getFullYear()} Herbal MG. All rights reserved. All medicines are dispensed in compliance with the Drugs and Cosmetics Act, 1940 and Drugs and Cosmetics Rules, 1945.
         <br />
-        Developed by{" "}
+        Crafted with 💙 by{" "}
         <a
-          href="https://your-portfolio-link.com"
+          href="https://portfolio-shreyam91s-projects.vercel.app/"
           className="text-blue-400 hover:underline"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Your Name
+          @Shreyam
         </a>
       </div>
     </footer>

@@ -6,6 +6,8 @@ import AppRoutes from "./route/AppRoutes";
 import Footer from './components/Footer'
 import GlobalLoader from './components/GlobalLoader';
 import { useState, useEffect } from "react";
+import { Toaster } from 'react-hot-toast';
+
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,7 @@ function App() {
 
   if (loading) {
     return (
+      
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
         <img
           src="/logo.png"
@@ -34,6 +37,8 @@ function App() {
   }
 
   return (
+    <>
+    <Toaster position="top-right" reverseOrder={false} />
     <CartProvider>
         <div className="min-h-screen bg-gray-50">
           <Navbar />
@@ -44,6 +49,7 @@ function App() {
           <Footer />
         </div>
     </CartProvider>
+    </>
   );
 }
 
