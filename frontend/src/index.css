@@ -119,3 +119,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+/* Hide scrollbar (Tailwind doesn't handle this by default) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}

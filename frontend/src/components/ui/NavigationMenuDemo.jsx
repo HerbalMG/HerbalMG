@@ -27,29 +27,7 @@ const components = [
     description:
       "Essential building blocks for a strong, balanced body. Strengthen your bones and support muscle function.",
   },
-  {
-    title: "Progress",
-    href: "/docs/primitives/progress",
-    description:
-      "Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.",
-  },
-  {
-    title: "Scroll-area",
-    href: "/docs/primitives/scroll-area",
-    description: "Visually or semantically separates content.",
-  },
-  {
-    title: "Tabs",
-    href: "/docs/primitives/tabs",
-    description:
-      "A set of layered sections of content—known as tab panels—that are displayed one at a time.",
-  },
-  {
-    title: "Tooltip",
-    href: "/docs/primitives/tooltip",
-    description:
-      "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.",
-  },
+  
 ]
 
 export function NavigationMenuDemo() {
@@ -58,7 +36,7 @@ export function NavigationMenuDemo() {
       <NavigationMenuList>
         <NavigationMenuItem>
          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <Link href="/">Home</Link>
+            <Link to="/">Home</Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
@@ -79,7 +57,7 @@ export function NavigationMenuDemo() {
         </NavigationMenuItem>
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <Link href="/docs">Blogs</Link>
+            <Link to="/blog">Blogs</Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
@@ -88,7 +66,7 @@ export function NavigationMenuDemo() {
             <ul className="grid w-[300px] gap-4">
               <li>
                 <NavigationMenuLink asChild>
-                  <Link href="#">
+                  <Link to="#">
                     <div className="font-medium">Whey Protein</div>
                     <div className="text-muted-foreground">
                       Fast-absorbing protein to fuel muscle growth and recovery.
@@ -96,7 +74,7 @@ export function NavigationMenuDemo() {
                   </Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#">
+                  <Link to="#">
                     <div className="font-medium">Pre/Post workout</div>
                     <div className="text-muted-foreground">
                       Energize before and recover better after every workout.
@@ -104,7 +82,7 @@ export function NavigationMenuDemo() {
                   </Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#">
+                  <Link to="#">
                     <div className="font-medium">Protein Supplements
                     </div>
                     <div className="text-muted-foreground">
@@ -122,13 +100,13 @@ export function NavigationMenuDemo() {
             <ul className="grid w-[200px] gap-4">
               <li>
                 <NavigationMenuLink asChild>
-                  <Link href="#">Personal Care</Link>
+                  <Link to="#">Personal Care</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#">Hair care</Link>
+                  <Link to="#">Hair care</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#">Face care</Link>
+                  <Link to="#">Face care</Link>
                 </NavigationMenuLink>
               </li>
             </ul>
@@ -140,17 +118,17 @@ export function NavigationMenuDemo() {
             <ul className="grid w-[200px] gap-4">
               <li>
                 <NavigationMenuLink asChild>
-                  <Link href="#" className="flex-row items-center gap-2">
+                  <Link to="#" className="flex-row items-center gap-2">
                     Fungal Infection
                   </Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#" className="flex-row items-center gap-2">
+                  <Link to="#" className="flex-row items-center gap-2">
                     Diabetes
                   </Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#" className="flex-row items-center gap-2">
+                  <Link to="#" className="flex-row items-center gap-2">
                     Sexual Wellness
                   </Link>
                 </NavigationMenuLink>
@@ -163,11 +141,11 @@ export function NavigationMenuDemo() {
   )
 }
 
-function ListItem({ title, children, href, ...props }) {
+function ListItem({ title, children, to, ...props }) {
   return (
     <li {...props}>
       <NavigationMenuLink asChild>
-        <Link href={href}>
+        <Link to={to}>
           <div className="text-sm leading-none font-medium">{title}</div>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
             {children}

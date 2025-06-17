@@ -18,6 +18,8 @@ import Testimonials from '../pages/Testimonials';
 import Blog from '../pages/Blog';
 import BlogPost from '../pages/BlogPost';
 import Offers from '../pages/Offers';
+import Contact from '../pages/Contact';
+import UserProfile from '../pages/UserProfile';
 const AppRoutes = () => {
   return (
     <Routes>
@@ -34,12 +36,15 @@ const AppRoutes = () => {
       <Route path="/about-us" element={<About />} />
       <Route path="/terms-and-conditions" element={<Terms />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
-      <Route path="/refund-policy" element={<RefundPolicy/>} />
+      <Route path="/return-and-refund-policy" element={<RefundPolicy/>} />
       <Route path="/faq" element={<FAQ/>} />
       <Route path="/testimonial" element={<Testimonials/>} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/blog/:id" element={<BlogPost />} />
       <Route path="/offers" element={<Offers />} />
+      <Route path="/contact" element={<Contact/>} />
+
+      <Route path="/profile" element={<UserProfile/>} />
 
       {/* Protected Routes (require login) */}
       {/* <Route path="/profile" element={

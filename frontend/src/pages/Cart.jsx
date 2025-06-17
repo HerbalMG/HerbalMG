@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import DealsOfTheDay from "../components/DealsOfTheDay";
 
 export default function Cart() {
   const {
@@ -38,6 +39,8 @@ export default function Cart() {
         >
           Continue Shopping
         </Link>
+
+        <DealsOfTheDay/>
       </div>
     );
   }
