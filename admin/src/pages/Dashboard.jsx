@@ -1,17 +1,17 @@
 import React from "react";
 
-import {
-  CurrencyDollarIcon,
-  UserPlusIcon,
-  UserGroupIcon,
-  ArrowTrendingUpIcon,
-} from '@heroicons/react/24/outline';
+// import {
+//   CurrencyDollarIcon,
+//   UserPlusIcon,
+//   UserGroupIcon,
+//   ArrowTrendingUpIcon,
+// } from '@heroicons/react/24/outline';
 
 const stats = [
   {
     title: 'Total Revenue',
     value: '$120,000',
-    icon: CurrencyDollarIcon,
+    // icon: CurrencyDollarIcon,
     color: 'text-green-600',
     bg: 'bg-green-50',
     trend: '+12.5%',
@@ -21,7 +21,7 @@ const stats = [
   {
     title: 'New Customers',
     value: '1,245',
-    icon: UserPlusIcon,
+    // icon: UserPlusIcon,
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     trend: '+5.3%',
@@ -31,7 +31,7 @@ const stats = [
   {
     title: 'Active Accounts',
     value: '3,560',
-    icon: UserGroupIcon,
+    // icon: UserGroupIcon,
     color: 'text-yellow-600',
     bg: 'bg-yellow-50',
     trend: '-1.2%',
@@ -41,7 +41,7 @@ const stats = [
   {
     title: 'Growth Rate',
     value: '8.5%',
-    icon: ArrowTrendingUpIcon,
+    // icon: ArrowTrendingUpIcon,
     color: 'text-purple-600',
     bg: 'bg-purple-50',
     trend: '+2.8%',
@@ -64,7 +64,7 @@ const Dashboard = () => {
     >
       <div className="flex items-center gap-4">
         <div className={`p-3 rounded-full ${stat.bg}`}>
-          <stat.icon className={`h-6 w-6 ${stat.color}`} />
+          {/* <stat.icon className={`h-6 w-6 ${stat.color}`} />  */}
         </div>
         <div>
           <p className="text-sm text-gray-500 font-medium">{stat.title}</p>
