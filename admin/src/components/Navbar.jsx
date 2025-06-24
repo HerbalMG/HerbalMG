@@ -9,6 +9,7 @@ const pathNameMap = {
   "/customers": "Customers",
   "/delivery-status": "Delivery Status",
   "/blogs": "Blogs",
+  "/payment": "Payment",
 };
 
 const Navbar = () => {

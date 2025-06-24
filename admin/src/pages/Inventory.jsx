@@ -7,6 +7,7 @@ const initialData = [
     quantity: 120,
     status: "In Stock",
     category: "Pain Relief",
+    brand: "Kapiva",
     expiry: "2026-05-01",
   },
   {
@@ -15,6 +16,7 @@ const initialData = [
     quantity: 0,
     status: "Out of Stock",
     category: "Antibiotics",
+    brand: "Patanjali",
     expiry: "2025-01-01",
   },
   {
@@ -23,6 +25,7 @@ const initialData = [
     quantity: 40,
     status: "Low Stock",
     category: "Pain Relief",
+    brand: "Kapiva",
     expiry: "2025-08-10",
   },
   {
@@ -31,6 +34,7 @@ const initialData = [
     quantity: 200,
     status: "In Stock",
     category: "Allergy",
+    brand: "Kapiva",
     expiry: "2026-03-01",
   },
   {
@@ -39,9 +43,9 @@ const initialData = [
     quantity: 10,
     status: "Low Stock",
     category: "Cold",
+    brand: "Patanjali",
     expiry: "2025-07-01",
   },
-  // Add more as needed
 ];
 
 const getStatusBadge = (status) => {
@@ -57,15 +61,10 @@ const getStatusBadge = (status) => {
   }
 };
 
-const getExpiryColor = (expiryDate) => {
-  const today = new Date();
-  const expiry = new Date(expiryDate);
-  const timeDiff = expiry - today;
-  const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-  if (daysLeft < 0) return "text-red-600";
-  if (daysLeft < 60) return "text-yellow-600";
-  return "text-gray-700";
+const getStatusFromQuantity = (quantity) => {
+  if (quantity === 0) return "Out of Stock";
+  if (quantity < 50) return "Low Stock";
+  return "In Stock";
 };
 
 const InventoryPage = () => {
@@ -81,9 +80,13 @@ const InventoryPage = () => {
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
+    const updatedItem = {
+      ...editingItem,
+      status: getStatusFromQuantity(editingItem.quantity),
+    };
     setInventory((prev) =>
       prev.map((item) =>
-        item.id === editingItem.id ? editingItem : item
+        item.id === updatedItem.id ? updatedItem : item
       )
     );
     setEditingItem(null);
@@ -100,7 +103,7 @@ const InventoryPage = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6  min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Medical Inventory</h1>
 
       {/* Search & Pagination Settings */}
@@ -140,7 +143,7 @@ const InventoryPage = () => {
               <th className="py-3 px-4 text-left border-b">Quantity</th>
               <th className="py-3 px-4 text-left border-b">Availability</th>
               <th className="py-3 px-4 text-left border-b">Category</th>
-              <th className="py-3 px-4 text-left border-b">Expiry</th>
+              <th className="py-3 px-4 text-left border-b">Brand</th>
               <th className="py-3 px-4 text-left border-b">Actions</th>
             </tr>
           </thead>
@@ -162,9 +165,7 @@ const InventoryPage = () => {
                   </span>
                 </td>
                 <td className="py-3 px-4 border-b">{item.category}</td>
-                <td className={`py-3 px-4 border-b ${getExpiryColor(item.expiry)}`}>
-                  {item.expiry}
-                </td>
+                <td className="py-3 px-4 border-b">{item.brand}</td>
                 <td className="py-3 px-4 border-b">
                   <button
                     onClick={() => setEditingItem({ ...item })}
@@ -226,24 +227,19 @@ const InventoryPage = () => {
                 className="w-full border px-3 py-2 rounded"
                 type="number"
                 value={editingItem.quantity}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const quantity = Number(e.target.value);
                   setEditingItem({
                     ...editingItem,
-                    quantity: Number(e.target.value),
-                  })
-                }
+                    quantity,
+                    status: getStatusFromQuantity(quantity),
+                  });
+                }}
               />
-              <select
-                className="w-full border px-3 py-2 rounded"
-                value={editingItem.status}
-                onChange={(e) =>
-                  setEditingItem({ ...editingItem, status: e.target.value })
-                }
-              >
-                <option>In Stock</option>
-                <option>Low Stock</option>
-                <option>Out of Stock</option>
-              </select>
+              <p className="text-sm text-gray-600">
+                Availability:{" "}
+                <strong>{getStatusFromQuantity(editingItem.quantity)}</strong>
+              </p>
               <input
                 className="w-full border px-3 py-2 rounded"
                 value={editingItem.category}
@@ -253,10 +249,9 @@ const InventoryPage = () => {
               />
               <input
                 className="w-full border px-3 py-2 rounded"
-                type="date"
-                value={editingItem.expiry}
+                value={editingItem.brand}
                 onChange={(e) =>
-                  setEditingItem({ ...editingItem, expiry: e.target.value })
+                  setEditingItem({ ...editingItem, brand: e.target.value })
                 }
               />
               <div className="flex justify-end gap-2">

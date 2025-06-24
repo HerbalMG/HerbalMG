@@ -5,8 +5,16 @@ const TabletForm = () => {
   const [form, setForm] = useState({
     name: '',
     price: '',
-    dosage: ''
+    dosage: '',
+    brand: '',
+    quantity: '',
+    description: '',
+    gst: '',
+    category: '', // Added category to form state
   });
+
+  const brands = ['Pfizer', 'Sun Pharma', 'Cipla', 'Dr. Reddy’s', 'Other'];
+  const categories = ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Other']; // Example categories
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,6 +38,30 @@ const TabletForm = () => {
         onChange={handleChange}
       />
 
+      <select
+        name="brand"
+        className="w-full border rounded p-2"
+        onChange={handleChange}
+        value={form.brand}
+      >
+        <option value="">Select Brand</option>
+        {brands.map((brand, index) => (
+          <option key={index} value={brand}>
+            {brand}
+          </option>
+        ))}
+      </select>
+
+      {/* 👇 New Category Field */}
+     <input
+  type="text"
+  name="category"
+  placeholder="Category"
+  className="w-full border rounded p-2"
+  onChange={handleChange}
+/>
+
+
       <input
         type="number"
         name="price"
@@ -42,6 +74,30 @@ const TabletForm = () => {
         type="text"
         name="dosage"
         placeholder="Dosage Information"
+        className="w-full border rounded p-2"
+        onChange={handleChange}
+      />
+
+      <input
+        type="number"
+        name="quantity"
+        placeholder="Total Quantity"
+        className="w-full border rounded p-2"
+        onChange={handleChange}
+      />
+
+      <textarea
+        name="description"
+        placeholder="Description"
+        className="w-full border rounded p-2"
+        rows={3}
+        onChange={handleChange}
+      />
+
+      <input
+        type="number"
+        name="gst"
+        placeholder="GST (%)"
         className="w-full border rounded p-2"
         onChange={handleChange}
       />
