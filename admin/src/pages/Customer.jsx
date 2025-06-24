@@ -87,7 +87,7 @@ export default function CustomerDetails() {
           <div className="flex flex-wrap gap-4 mb-4">
             <input
               className="border px-3 py-2"
-              placeholder="Search name / ID / mobile / email"
+              placeholder="Name / ID / mobile / email"
               value={search}
               onChange={e => {
                 setSearch(e.target.value);
@@ -204,12 +204,7 @@ function CustomerRow({ serial, customer, onDeactivate, onDelete }) {
         )}
       </td>
       <td className="p-2 border space-x-2 text-sm">
-        <button
-          className="text-yellow-600 hover:underline"
-          onClick={onDeactivate}
-        >
-          Deactivate
-        </button>
+        
         <button className="text-red-600 hover:underline" onClick={onDelete}>
           Delete
         </button>
@@ -221,13 +216,13 @@ function CustomerRow({ serial, customer, onDeactivate, onDelete }) {
 function Pagination({ currentPage, pageCount, onPageChange }) {
   return (
     <div className="flex space-x-2">
-      <button
+      {/* <button
         disabled={currentPage === 1}
         onClick={() => onPageChange(1)}
         className="px-2 py-1 border disabled:opacity-50"
       >
         « First
-      </button>
+      </button> */}
       <button
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
@@ -245,13 +240,13 @@ function Pagination({ currentPage, pageCount, onPageChange }) {
       >
         Next ›
       </button>
-      <button
+      {/* <button
         disabled={currentPage === pageCount}
         onClick={() => onPageChange(pageCount)}
         className="px-2 py-1 border disabled:opacity-50"
       >
         Last »
-      </button>
+      </button> */}
     </div>
   );
 }

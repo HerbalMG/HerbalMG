@@ -10,6 +10,7 @@ import Customer from './pages/Customer'
 import Inventory from './pages/Inventory'
 import DeliveryStatus from './pages/DeliveryStatus'
 import PaymentPage from './pages/PaymentPage'
+import Blog from './pages/Blog'
 
 
 const App = () => {
@@ -29,6 +30,7 @@ const App = () => {
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/delivery-status" element={<DeliveryStatus />} />
             <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/blogs" element={<Blog />} />
             {/* Other routes */}
           </Routes>
         </main>

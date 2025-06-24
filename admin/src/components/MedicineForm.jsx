@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import TabletForm from './TabletForm';
-import SyrupForm from './SyrupForm';
-import PowderForm from './PowderForm';
+import MedForm from './MedForm';
 
 const MedicineForm = () => {
   const [type, setType] = useState('');
@@ -16,13 +15,11 @@ const MedicineForm = () => {
       >
         <option value="">-- Select Type --</option>
         <option value="tablet">Tablet / Capsule</option>
-        <option value="syrup">Syrup</option>
-        <option value="powder">Powder</option>
+        <option value="med">Syrup / Powder</option>
       </select>
 
       {type === 'tablet' && <TabletForm />}
-      {type === 'syrup' && <SyrupForm />}
-      {type === 'powder' && <PowderForm />}
+      {type === 'med' && <MedForm />}
     </div>
   );
 };

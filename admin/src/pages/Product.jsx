@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import EquipmentForm from '../components/EquipmentForm';
 import MedicineForm from '../components/MedicineForm';
+import BrandForm from '@/components/BrandForm';
+import BannerManager from '@/components/BannerManager';
 
 const Product = () => {
   const [category, setCategory] = useState('');
 
   return (
+    <>
     <div className="max-w-4xl mx-auto p-6 bg-white shadow rounded-lg mt-10">
-      <h2 className="text-2xl font-semibold mb-6">Add New Product</h2>
+      <h2 className="text-2xl font-semibold mb-6">Product</h2>
 
       {/* Category Selector */}
       <div className="mb-6">
@@ -27,6 +30,19 @@ const Product = () => {
       {category === 'equipment' && <EquipmentForm />}
       {category === 'medicine' && <MedicineForm />}
     </div>
+
+    <div className="max-w-4xl mx-auto p-6 bg-white shadow rounded-lg mt-10">
+      <h2 className="text-2xl font-semibold mb-6">Brand</h2>
+        <BrandForm/>
+    </div>
+    
+    <div className="max-w-4xl mx-auto p-6 bg-white shadow rounded-lg mt-10">
+      <h2 className="text-2xl font-semibold mb-6 ">Banner</h2>
+        <BannerManager/>
+    </div>
+
+    
+    </>
   );
 };
 
