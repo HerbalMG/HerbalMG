@@ -1,3 +1,5 @@
+// OrdersPro.jsx
+
 import { useState, useMemo, useEffect } from 'react';
 
 const statusOptions = ['Ordered', 'Shipped', 'Delivered', 'Returned', 'Refunded'];
@@ -5,6 +7,7 @@ const statusOptions = ['Ordered', 'Shipped', 'Delivered', 'Returned', 'Refunded'
 const initialOrders = [
   {
     id: 1,
+    invoiceId: 'INV-1001',
     customerName: 'John Doe',
     date: '2025-06-18',
     price: 149.99,
@@ -12,10 +15,11 @@ const initialOrders = [
     items: 'Aspirin x2, Thermometer x1, Bandages x5, Hand Sanitizer x1',
     address: '123 Main St, Springfield',
     notes: '',
-    payment_type:'Online',
+    payment_type: 'Online',
   },
   {
     id: 2,
+    invoiceId: 'INV-1002',
     customerName: 'Jane Smith',
     date: '2025-06-17',
     price: 89.5,
@@ -23,11 +27,12 @@ const initialOrders = [
     items: 'Vitamin C x3, Bandage x5',
     address: '456 Elm St, Rivertown',
     notes: '',
-    payment_type:'COD',
-
+    payment_type: 'COD',
+    prescriptionRequired: true,
   },
   {
     id: 3,
+    invoiceId: 'INV-1003',
     customerName: 'Robert Brown',
     date: '2025-06-15',
     price: 119.99,
@@ -35,10 +40,11 @@ const initialOrders = [
     items: 'Insulin Pen x1, Glucometer x1, Test Strips x50, Cotton x2, Gloves x10',
     address: '789 Oak St, Hillview',
     notes: '',
-    payment_type:'UPI',
+    payment_type: 'UPI',
   },
   {
     id: 4,
+    invoiceId: 'INV-1004',
     customerName: 'Alice Green',
     date: '2025-06-14',
     price: 59.0,
@@ -46,16 +52,14 @@ const initialOrders = [
     items: 'Mask x5, Thermometer x1',
     address: '222 Maple Ave, Hilltown',
     notes: '',
-    payment_type:'COD',
-
+    payment_type: 'COD',
   },
 ];
 
 export default function OrdersPro() {
-  // === States ===
   const [orders, setOrders] = useState(initialOrders);
   const [filterStatus, setFilterStatus] = useState('All');
-  const [entriesPerPage, setEntriesPerPage] = useState(5);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [selectedIds, setSelectedIds] = useState([]);
@@ -65,67 +69,79 @@ export default function OrdersPro() {
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [noteEdits, setNoteEdits] = useState({});
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [visibleColumns, setVisibleColumns] = useState({
     srNo: true,
+    orderId: true,
+    invoiceId: true,
     customerName: true,
     date: true,
     price: true,
     status: true,
     items: true,
     address: true,
+    payment_type: true,
     notes: true,
   });
-  const [noteEdits, setNoteEdits] = useState({});
 
-  // === Sorting ===
+  // Sorting
   const handleSort = key => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
     setSortConfig({ key, direction });
   };
 
-  // === Filtering, Searching & Sorting ===
+  // Filtering, Searching, Sorting
   const filteredOrders = useMemo(() => {
     let filtered = [...orders];
     if (filterStatus !== 'All') filtered = filtered.filter(o => o.status === filterStatus);
-
     if (searchTerm.trim()) {
-      const lowerTerm = searchTerm.toLowerCase();
+      const lower = searchTerm.toLowerCase();
       filtered = filtered.filter(o =>
-        o.customerName.toLowerCase().includes(lowerTerm) ||
-        o.items.toLowerCase().includes(lowerTerm) ||
-        o.date.toLowerCase().includes(lowerTerm)
+        o.customerName.toLowerCase().includes(lower) ||
+        o.items.toLowerCase().includes(lower) ||
+        o.date.toLowerCase().includes(lower)
       );
+    }
+    if (dateFrom) {
+      filtered = filtered.filter(o => new Date(o.date) >= new Date(dateFrom));
+    }
+    if (dateTo) {
+      filtered = filtered.filter(o => new Date(o.date) <= new Date(dateTo));
     }
 
     if (sortConfig.key) {
       filtered.sort((a, b) => {
         let aVal = a[sortConfig.key];
         let bVal = b[sortConfig.key];
-        if (sortConfig.key === 'price') {
-          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+        if (sortConfig.key === 'price') return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+        if (sortConfig.key === 'date') {
+          const dateA = new Date(aVal);
+          const dateB = new Date(bVal);
+          return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
         }
-        // String comparison
-        aVal = aVal.toString().toLowerCase();
-        bVal = bVal.toString().toLowerCase();
-        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
+        aVal = aVal?.toString().toLowerCase();
+        bVal = bVal?.toString().toLowerCase();
+        return sortConfig.direction === 'asc'
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
       });
     }
-    return filtered;
-  }, [orders, filterStatus, searchTerm, sortConfig]);
 
-  // === Pagination ===
+    return filtered;
+  }, [orders, filterStatus, searchTerm, sortConfig, dateFrom, dateTo]);
+
   const totalPages = Math.ceil(filteredOrders.length / entriesPerPage);
   const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage
   );
 
-  // === Select/Deselect rows ===
+  // Toggle Select
   const toggleSelectRow = id => {
-    setSelectedIds(prev => (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]));
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
   const toggleSelectAll = () => {
@@ -138,12 +154,7 @@ export default function OrdersPro() {
     }
   };
 
-  // === Item expansion toggle ===
-  const toggleItemExpansion = id => {
-    setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  // === Status change handlers ===
+  // Status changes
   const confirmBulkStatusChange = status => {
     setPendingStatusChange(status);
     setShowConfirmModal(true);
@@ -160,7 +171,6 @@ export default function OrdersPro() {
     setPendingStatusChange(null);
   };
 
-  // === Bulk Delete handlers ===
   const confirmBulkDelete = () => {
     setPendingDelete(true);
     setShowConfirmModal(true);
@@ -173,14 +183,12 @@ export default function OrdersPro() {
     setPendingDelete(false);
   };
 
-  // === Individual Status change ===
   const handleStatusChange = (id, newStatus) => {
     setOrders(prev =>
-      prev.map(order => (order.id === id ? { ...order, status: newStatus } : order))
+      prev.map(order => order.id === id ? { ...order, status: newStatus } : order)
     );
   };
 
-  // === Note editing ===
   const handleNoteChange = (id, text) => {
     setNoteEdits(prev => ({ ...prev, [id]: text }));
   };
@@ -197,50 +205,22 @@ export default function OrdersPro() {
     });
   };
 
-  // === CSV Export ===
-  const exportToCSV = () => {
-    // Export selected or filtered orders
-    const exportOrders = selectedIds.length ? orders.filter(o => selectedIds.includes(o.id)) : filteredOrders;
-
-    const header = ['ID', 'Customer Name', 'Date', 'Price', 'Status', 'Items', 'Address', 'Notes'];
-    const rows = exportOrders.map(o => [
-      o.id,
-      `"${o.customerName}"`,
-      o.date,
-      o.price.toFixed(2),
-      o.status,
-      `"${o.items}"`,
-      `"${o.address}"`,
-      `"${o.notes}"`,
-    ]);
-
-    const csvContent =
-      [header, ...rows].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `orders_export_${Date.now()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const toggleItemExpansion = id => {
+    setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // === Column toggle ===
   const toggleColumn = col => {
     setVisibleColumns(prev => ({ ...prev, [col]: !prev[col] }));
   };
 
-  // Reset page if filtered or search changes
-  useEffect(() => setCurrentPage(1), [filterStatus, searchTerm, entriesPerPage]);
+  useEffect(() => setCurrentPage(1), [filterStatus, searchTerm, entriesPerPage, dateFrom, dateTo]);
 
   return (
-    <div className="p-6 max-w-full">
+    <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Orders Dashboard</h1>
 
-      {/* Filters & Actions */}
-      <div className="flex flex-wrap items-center gap-4 mb-4">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-4">
         <input
           type="search"
           placeholder="Search customer, items, date..."
@@ -264,25 +244,23 @@ export default function OrdersPro() {
         </label>
 
         <label className="flex items-center gap-2">
-          Entries per page:
+          From:
           <input
-            type="number"
-            min={1}
-            max={100}
-            className="w-16 border rounded px-2 py-1"
-            value={entriesPerPage}
-            onChange={e => setEntriesPerPage(Number(e.target.value))}
+            type="date"
+            className="border rounded px-2 py-1"
+            value={dateFrom}
+            onChange={e => setDateFrom(e.target.value)}
           />
         </label>
-
-        <button
-          disabled={selectedIds.length === 0}
-          onClick={() => confirmBulkDelete()}
-          className="bg-red-600 disabled:bg-red-300 text-white px-4 py-1 rounded hover:bg-red-700 transition"
-          title="Delete Selected"
-        >
-          Delete Selected
-        </button>
+        <label className="flex items-center gap-2">
+          To:
+          <input
+            type="date"
+            className="border rounded px-2 py-1"
+            value={dateTo}
+            onChange={e => setDateTo(e.target.value)}
+          />
+        </label>
 
         <label className="flex items-center gap-2">
           Bulk Status:
@@ -296,331 +274,187 @@ export default function OrdersPro() {
               Change to...
             </option>
             {statusOptions.map(s => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+              <option key={s}>{s}</option>
             ))}
           </select>
         </label>
 
         <button
-          onClick={exportToCSV}
-          className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
-          title="Export to CSV"
+          disabled={selectedIds.length === 0}
+          onClick={confirmBulkDelete}
+          className="bg-red-600 disabled:bg-red-300 text-white px-4 py-1 rounded hover:bg-red-700"
         >
-          Export CSV
+          Delete Selected
         </button>
       </div>
 
-      {/* Column visibility toggles */}
-      <div className="mb-4 flex flex-wrap gap-3">
-        {Object.keys(visibleColumns).map(col => (
-          <label key={col} className="flex items-center gap-1 text-sm">
-            <input
-              type="checkbox"
-              checked={visibleColumns[col]}
-              onChange={() => toggleColumn(col)}
-            />
-            {col
-              .replace(/([A-Z])/g, ' $1')
-              .replace(/^./, str => str.toUpperCase())}
-          </label>
-        ))}
-      </div>
-
-      {/* Table container with sticky header */}
-      <div className="overflow-x-auto max-w-full border rounded">
-        <table className="min-w-full text-sm border-collapse">
-          <thead className="bg-gray-100 sticky top-0 z-10">
+      {/* Table */}
+      <div className="overflow-x-auto border rounded">
+        <table className="min-w-[1500px] w-full text-sm border-collapse">
+          <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="border px-3 py-2">
+              <th className="border px-2 py-2 text-center">
                 <input
                   type="checkbox"
-                  checked={
-                    paginatedOrders.length > 0 &&
-                    paginatedOrders.every(order => selectedIds.includes(order.id))
-                  }
+                  checked={paginatedOrders.every(o => selectedIds.includes(o.id))}
                   onChange={toggleSelectAll}
                 />
               </th>
-
-              {visibleColumns.srNo && <th className="border px-3 py-2">Sr No.</th>}
-
-              {visibleColumns.customerName && (
-                <th
-                  className="border px-3 py-2 cursor-pointer select-none"
-                  onClick={() => handleSort('customerName')}
-                >
-                  Customer Name{' '}
-                  {sortConfig.key === 'customerName' ? (
-                    sortConfig.direction === 'asc' ? '▲' : '▼'
-                  ) : (
-                    ''
-                  )}
-                </th>
-              )}
-
+              {visibleColumns.srNo && <th className="border px-2 py-2">Sr No</th>}
+              {visibleColumns.orderId && <th className="border px-2 py-2">Order ID</th>}
+              {visibleColumns.invoiceId && <th className="border px-2 py-2">Invoice ID</th>}
+              {visibleColumns.customerName && <th className="border px-2 py-2">Customer</th>}
               {visibleColumns.date && (
-                <th
-                  className="border px-3 py-2 cursor-pointer select-none"
-                  onClick={() => handleSort('date')}
-                >
-                  Date{' '}
-                  {sortConfig.key === 'date' ? (
-                    sortConfig.direction === 'asc' ? '▲' : '▼'
-                  ) : (
-                    ''
-                  )}
-                </th>
-              )}
-
-              {visibleColumns.price && (
-                <th
-                  className="border px-3 py-2 cursor-pointer select-none"
-                  onClick={() => handleSort('price')}
-                >
-                  Price{' '}
-                  {sortConfig.key === 'price' ? (
-                    sortConfig.direction === 'asc' ? '▲' : '▼'
-                  ) : (
-                    ''
-                  )}
-                </th>
-              )}
-
-              {visibleColumns.status && <th className="border px-3 py-2">Status</th>}
-
-              {visibleColumns.items && <th className="border px-3 py-2">Items</th>}
-
-              {visibleColumns.address && <th className="border px-3 py-2">Address</th>}
-
-              {visibleColumns.payment_type && <th className="border px-3 py-2">Payment Type</th>}
-              
-              {visibleColumns.notes && <th className="border px-3 py-2">Notes</th>}
-
-              <th className="border px-3 py-2">Actions</th>
+  <th
+    className="border px-3 py-2 cursor-pointer select-none whitespace-nowrap min-w-[120px]"
+    onClick={() => handleSort('date')}
+  >
+    Date{' '}
+    {sortConfig.key === 'date' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+  </th>
+)}
+              {visibleColumns.price && <th className="border px-2 py-2">Price (₹)</th>}
+              {visibleColumns.status && <th className="border px-2 py-2">Status</th>}
+              {visibleColumns.items && <th className="border px-2 py-2">Items</th>}
+              {visibleColumns.address && <th className="border px-2 py-2">Address</th>}
+              {visibleColumns.payment_type && <th className="border px-2 py-2">Payment</th>}
+              {visibleColumns.notes && <th className="border px-2 py-2">Notes</th>}
+              <th className="border px-2 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedOrders.length === 0 && (
-              <tr>
-                <td colSpan="100%" className="text-center py-6 text-gray-500">
-                  No orders found.
+            {paginatedOrders.map((order, idx) => (
+              <tr
+  key={order.id}
+  className={order.prescriptionRequired ? 'border-2 border-red-500' : ''}
+>
+
+                <td className="border text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(order.id)}
+                    onChange={() => toggleSelectRow(order.id)}
+                  />
                 </td>
-              </tr>
-            )}
-            {paginatedOrders.map((order, idx) => {
-              const isSelected = selectedIds.includes(order.id);
-              const isExpanded = expandedItems[order.id];
-              const itemsArray = order.items.split(',').map(i => i.trim());
-              const shortItems = itemsArray.slice(0, 3).join(', ');
-              return (
-                <tr
-                  key={order.id}
-                  className={isSelected ? 'bg-blue-100' : undefined}
-                >
-                  <td className="border px-3 py-2 text-center">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleSelectRow(order.id)}
+                {visibleColumns.srNo && <td className="border px-2 py-1 text-center">{(currentPage - 1) * entriesPerPage + idx + 1}</td>}
+                {visibleColumns.orderId && <td className="border px-2 py-1">{order.id}</td>}
+                {visibleColumns.invoiceId && <td className="border px-2 py-1">{order.invoiceId}</td>}
+                {visibleColumns.customerName && <td className="border px-2 py-1">{order.customerName}</td>}
+                {visibleColumns.date && (
+  <td className="border px-3 py-2 whitespace-nowrap min-w-[120px]">
+    {order.date}
+  </td>
+)}
+                {visibleColumns.price && <td className="border px-2 py-1">₹{order.price.toFixed(2)}</td>}
+                {visibleColumns.status && (
+                  <td className="border px-2 py-1">
+                    <select
+                      className="border rounded px-1 py-0.5"
+                      value={order.status}
+                      onChange={e => handleStatusChange(order.id, e.target.value)}
+                    >
+                      {statusOptions.map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </td>
+                )}
+                {visibleColumns.items && (
+                  <td className="border px-2 py-1">{order.items}</td>
+                )}
+                {visibleColumns.address && <td className="border px-2 py-1">{order.address}</td>}
+                {visibleColumns.payment_type && <td className="border px-2 py-1">{order.payment_type}</td>}
+                {visibleColumns.notes && (
+                  <td className="border px-2 py-1">
+                    <textarea
+                      rows={2}
+                      value={noteEdits[order.id] ?? order.notes}
+                      onChange={e => handleNoteChange(order.id, e.target.value)}
+                      onBlur={() => saveNote(order.id)}
+                      className="w-full border rounded"
+                      placeholder="Note..."
                     />
                   </td>
-
-                  {visibleColumns.srNo && (
-                    <td className="border px-3 py-2 text-center">
-                      {(currentPage - 1) * entriesPerPage + idx + 1}
-                    </td>
-                  )}
-
-                  {visibleColumns.customerName && (
-                    <td className="border px-3 py-2">{order.customerName}</td>
-                  )}
-
-                  {visibleColumns.date && (
-                    <td className="border px-3 py-2">{order.date}</td>
-                  )}
-
-                  {visibleColumns.price && (
-                    <td className="border px-3 py-2">${order.price.toFixed(2)}</td>
-                  )}
-
-                  {visibleColumns.status && (
-                    <td className="border px-3 py-2">
-                      <select
-                        className="border rounded px-2 py-1 w-full"
-                        value={order.status}
-                        onChange={e => handleStatusChange(order.id, e.target.value)}
-                      >
-                        {statusOptions.map(status => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                  )}
-
-                  {visibleColumns.items && (
-                    <td className="border px-3 py-2 max-w-xs">
-                      {isExpanded ? (
-                        <>
-                          {order.items}
-                          <button
-                            className="ml-2 text-blue-600 underline text-xs"
-                            onClick={() => toggleItemExpansion(order.id)}
-                          >
-                            (less)
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {shortItems}
-                          {itemsArray.length > 3 && (
-                            <button
-                              className="ml-2 text-blue-600 underline text-xs"
-                              onClick={() => toggleItemExpansion(order.id)}
-                            >
-                              (more)
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </td>
-                  )}
-
-                  {visibleColumns.address && (
-                    <td className="border px-3 py-2">{order.address}</td>
-                  )}
-
-                  {visibleColumns.payment_type && (
-                    <td className="border px-3 py-2">{order.payment_type}</td>
-                  )}
-
-                  {visibleColumns.notes && (
-                    <td className="border px-3 py-2 max-w-xs">
-                      <textarea
-                        rows={2}
-                        className="w-full border rounded px-2 py-1 text-sm resize-none"
-                        value={noteEdits[order.id] !== undefined ? noteEdits[order.id] : order.notes}
-                        onChange={e => handleNoteChange(order.id, e.target.value)}
-                        onBlur={() => saveNote(order.id)}
-                        placeholder="Add notes..."
-                      />
-                    </td>
-                  )}
-
-                  <td className="border px-3 py-2 text-center">
-                    <button
-                      onClick={() => setShowDetailsOrder(order)}
-                      className="text-blue-600 underline"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+                )}
+                <td className="border px-2 py-1 text-center">
+                  <button
+                    className="text-blue-600 underline"
+                    onClick={() => setShowDetailsOrder(order)}
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="mt-4 flex justify-between items-center flex-wrap gap-3">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-          className="px-4 py-1 border rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          disabled={currentPage === totalPages || totalPages === 0}
-          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-          className="px-4 py-1 border rounded disabled:opacity-50"
-        >
-          Next
-        </button>
+      {/* Pagination Controls */}
+      <div className="mt-4 flex flex-wrap gap-4 items-center justify-between">
+        <div>
+          <label>
+            Entries per page:
+            <select
+              value={entriesPerPage}
+              onChange={e => setEntriesPerPage(Number(e.target.value))}
+              className="ml-2 border px-2 py-1"
+            >
+              {[10, 25, 50].map(n => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            className="border px-3 py-1 rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>
+            Page {currentPage} of {totalPages} | Total entries: {filteredOrders.length}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="border px-3 py-1 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
-      {/* Order Details Modal */}
-      {showDetailsOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative max-h-full overflow-y-auto">
-            <button
-              onClick={() => setShowDetailsOrder(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-900 text-2xl font-bold"
-              aria-label="Close details modal"
-            >
-              &times;
-            </button>
-            <h2 className="text-2xl font-bold mb-4">Order Details</h2>
-            <p>
-              <strong>Customer:</strong> {showDetailsOrder.customerName}
-            </p>
-            <p>
-              <strong>Date:</strong> {showDetailsOrder.date}
-            </p>
-            <p>
-              <strong>Price:</strong> ${showDetailsOrder.price.toFixed(2)}
-            </p>
-            <p>
-              <strong>Status:</strong> {showDetailsOrder.status}
-            </p>
-            <p>
-              <strong>Items:</strong> {showDetailsOrder.items}
-            </p>
-            <p>
-              <strong>Address:</strong> {showDetailsOrder.address}
-            </p>
-            <p>
-              <strong>Notes:</strong> {showDetailsOrder.notes || '(No notes)'}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* View Modal */}
+{showDetailsOrder && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+    <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg max-h-full overflow-auto relative">
+      <button
+        className="absolute top-3 right-3 text-gray-500 hover:text-gray-900 text-xl"
+        onClick={() => setShowDetailsOrder(null)}
+      >
+        &times;
+      </button>
+      <h2 className="text-2xl font-bold mb-4">Order Details</h2>
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
-            <h2 className="text-lg font-semibold mb-4">
-              {pendingDelete ? 'Confirm Deletion' : 'Confirm Status Change'}
-            </h2>
-            <p>
-              {pendingDelete
-                ? `Are you sure you want to delete ${selectedIds.length} selected order(s)? This action cannot be undone.`
-                : `Are you sure you want to change the status of ${selectedIds.length} selected order(s) to "${pendingStatusChange}"?`}
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                onClick={() => {
-                  setShowConfirmModal(false);
-                  setPendingStatusChange(null);
-                  setPendingDelete(false);
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className={`px-4 py-2 rounded text-white ${
-                  pendingDelete ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-                onClick={() => {
-                  if (pendingDelete) applyBulkDelete();
-                  else applyBulkStatusChange();
-                }}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="space-y-2 text-sm">
+        <p><strong>Order ID:</strong> {showDetailsOrder.id}</p>
+        <p><strong>Invoice ID:</strong> {showDetailsOrder.invoiceId}</p>
+        <p><strong>Customer:</strong> {showDetailsOrder.customerName}</p>
+        <p><strong>Date:</strong> {showDetailsOrder.date}</p>
+        <p><strong>Price:</strong> ₹{showDetailsOrder.price.toFixed(2)}</p>
+        <p><strong>Status:</strong> {showDetailsOrder.status}</p>
+        <p><strong>Items:</strong> {showDetailsOrder.items}</p>
+        <p><strong>Address:</strong> {showDetailsOrder.address}</p>
+        <p><strong>Payment Type:</strong> {showDetailsOrder.payment_type}</p>
+        <p><strong>Notes:</strong> {showDetailsOrder.notes || '(No notes)'}</p>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
