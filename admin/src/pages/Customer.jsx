@@ -9,6 +9,7 @@ const initialCustomers = [
     email: 'alice@example.com',
     address: '1234 Elm Street, Springfield, IL 62704',
     active: true,
+    createdAt: '2024-01-10',
   },
   {
     id: 'CUST002',
@@ -17,9 +18,10 @@ const initialCustomers = [
     email: 'bob@example.com',
     address: '5678 Oak Avenue, Metropolis, NY 10001',
     active: true,
+    createdAt: '2024-03-15',
   },
-  // Add more customers as needed
 ];
+
 
 export default function CustomerDetails() {
   const [customers, setCustomers] = useState([]);
@@ -31,6 +33,10 @@ export default function CustomerDetails() {
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const [modal, setModal] = useState({ type: null, customer: null });
+
+  const [startDate, setStartDate] = useState('');
+const [endDate, setEndDate] = useState('');
+
 
   useEffect(() => {
     setLoading(true);
@@ -56,18 +62,29 @@ export default function CustomerDetails() {
   };
 
   const filtered = useMemo(() => {
-    return customers
-      .filter(c => c.active)
-      .filter(c => {
-        const s = search.toLowerCase();
-        return (
-          c.name.toLowerCase().includes(s) ||
-          c.id.toLowerCase().includes(s) ||
-          c.mobile.includes(search) ||
-          c.email.toLowerCase().includes(s)
-        );
-      });
-  }, [customers, search]);
+  return customers
+    .filter(c => c.active)
+    .filter(c => {
+      const s = search.toLowerCase();
+      return (
+        c.name.toLowerCase().includes(s) ||
+        c.id.toLowerCase().includes(s) ||
+        c.mobile.includes(search) ||
+        c.email.toLowerCase().includes(s)
+      );
+    })
+    .filter(c => {
+      if (!startDate && !endDate) return true;
+      const date = new Date(c.createdAt);
+      const from = startDate ? new Date(startDate) : null;
+      const to = endDate ? new Date(endDate) : null;
+      return (
+        (!from || date >= from) &&
+        (!to || date <= to)
+      );
+    });
+}, [customers, search, startDate, endDate]);
+
 
   const pageCount = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice(
@@ -95,19 +112,48 @@ export default function CustomerDetails() {
               }}
             />
             <label>
-              Items per page:
-              <input
-                type="number"
-                min="1"
-                value={itemsPerPage}
-                className="border px-2 ml-2 w-16"
-                onChange={e => {
-                  const v = Number(e.target.value) || 5;
-                  setItemsPerPage(v);
-                  setCurrentPage(1);
-                }}
-              />
-            </label>
+  Items per page:
+  <select
+    value={itemsPerPage}
+    className="border px-2 py-1 ml-2"
+    onChange={e => {
+      setItemsPerPage(Number(e.target.value));
+      setCurrentPage(1);
+    }}
+  >
+    <option value={10}>10</option>
+    <option value={25}>25</option>
+    <option value={50}>50</option>
+  </select>
+</label>
+
+<label className="ml-4">
+  Start date:
+  <input
+    type="date"
+    className="border px-2 py-1 ml-2"
+    value={startDate}
+    onChange={e => {
+      setStartDate(e.target.value);
+      setCurrentPage(1);
+    }}
+  />
+</label>
+
+<label className="ml-4">
+  End date:
+  <input
+    type="date"
+    className="border px-2 py-1 ml-2"
+    value={endDate}
+    onChange={e => {
+      setEndDate(e.target.value);
+      setCurrentPage(1);
+    }}
+  />
+</label>
+
+
           </div>
 
           <table className="w-full border text-sm">
@@ -119,6 +165,7 @@ export default function CustomerDetails() {
                 <th className="px-2 py-1 border">Mobile</th>
                 <th className="px-2 py-1 border">Email</th>
                 <th className="px-2 py-1 border">Address</th>
+                <th className="px-2 py-1 border">Created At</th>
                 <th className="px-2 py-1 border">Actions</th>
               </tr>
             </thead>
@@ -203,6 +250,10 @@ function CustomerRow({ serial, customer, onDeactivate, onDelete }) {
           </button>
         )}
       </td>
+      <td className="p-2 border">
+  {new Date(customer.createdAt).toLocaleDateString()}
+</td>
+
       <td className="p-2 border space-x-2 text-sm">
         
         <button className="text-red-600 hover:underline" onClick={onDelete}>

@@ -37,17 +37,19 @@ export default function DeliveryStatusTable() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
-    const res = await simulateFetch(); // Replace with real API call
+    const res = await simulateFetch();
     setData(res);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 300000); // Refresh every 30 sec
+    const interval = setInterval(fetchData, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -59,8 +61,23 @@ export default function DeliveryStatusTable() {
   };
 
   const filtered = data
-    .filter(item => item.invoice.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter(item => statusFilter === 'All' || item.status === statusFilter);
+    .filter(item =>
+  item.invoice.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  item.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  item.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  item.city.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  item.paymentMode.toLowerCase().includes(searchTerm.toLowerCase()) 
+)
+
+    .filter(item => statusFilter === 'All' || item.status === statusFilter)
+    .filter(item => {
+      const orderDate = new Date(item.orderDate);
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+      if (start && orderDate < start) return false;
+      if (end && orderDate > end) return false;
+      return true;
+    });
 
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
   const pageData = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
@@ -84,12 +101,23 @@ export default function DeliveryStatusTable() {
       <div className="flex flex-wrap gap-4 justify-between">
         <input
           type="text"
-          placeholder="Search Invoice"
+          placeholder="Search "
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border px-3 py-1 rounded text-sm"
         />
-
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="border px-2 py-1 rounded text-sm"
+        />
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="border px-2 py-1 rounded text-sm"
+        />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -100,13 +128,12 @@ export default function DeliveryStatusTable() {
           <option value="In Transit">In Transit</option>
           <option value="Pending">Pending</option>
         </select>
-
         <select
           value={rowsPerPage}
           onChange={handleRowsChange}
           className="border px-2 py-1 rounded text-sm"
         >
-          {[5, 10, 25].map(n => <option key={n} value={n}>{n} per page</option>)}
+          {[10, 25, 50].map(n => <option key={n} value={n}>{n} per page</option>)}
         </select>
       </div>
 
@@ -121,32 +148,29 @@ export default function DeliveryStatusTable() {
               <th className="border p-2">Order ID</th>
               <th className="border p-2">Location</th>
               <th className="border p-2">Order Date</th>
-              {/* <th className="border p-2">Transit Date</th> */}
               <th className="border p-2">Delivery Date</th>
               <th className="border p-2">Payment</th>
               <th className="border p-2">Status</th>
             </tr>
           </thead>
           <tbody>
-            {pageData.length ? pageData.map((item) => (
+            {pageData.length ? pageData.map((item, index) => (
               <tr
                 key={item.invoice}
                 className={`hover:bg-gray-100 ${isDelayed(item.status, item.orderDate) ? 'border-l-4 border-red-500' : ''}`}
               >
-                <td className="border p-2">{item.srNo}</td>
+                <td className="border p-2">{(currentPage - 1) * rowsPerPage + index + 1}</td>
                 <td className="border p-2">{item.invoice}</td>
                 <td className="border p-2">{item.customer.id}</td>
                 <td className="border p-2">{item.customer.name}</td>
                 <td className="border p-2">{item.orderId}</td>
                 <td className="border p-2">{item.city}, {item.pincode}</td>
                 <td className="border p-2">{new Date(item.orderDate).toLocaleDateString()}</td>
-                {/* <td className="border p-2">{new Date(item.transitDate).toLocaleDateString()}</td> */}
                 <td className="border p-2">
-  {item.status === 'Delivered'
-    ? new Date(item.deliveryDate).toLocaleDateString()
-    : 'In Transit'}
-</td>
-
+                  {item.status === 'Delivered'
+                    ? new Date(item.deliveryDate).toLocaleDateString()
+                    : 'In Transit'}
+                </td>
                 <td className="border p-2">{item.paymentMode}</td>
                 <td className="border p-2">
                   <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColors[item.status]}`}>
@@ -165,11 +189,13 @@ export default function DeliveryStatusTable() {
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-between items-center text-sm text-gray-700">
-          <div>
+          {/* <div>
             Page {currentPage} of {totalPages}
+          </div> */}
+          <div>
+            Page {currentPage} of {totalPages}, Total entries: {filtered.length}
           </div>
           <div className="space-x-2">
             <button

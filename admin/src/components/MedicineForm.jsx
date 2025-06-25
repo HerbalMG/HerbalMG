@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import TabletForm from './TabletForm';
 import MedForm from './MedForm';
 
-const MedicineForm = () => {
+const MedicineForm = ({ category }) => {
   const [type, setType] = useState('');
 
   return (
@@ -18,8 +18,8 @@ const MedicineForm = () => {
         <option value="med">Syrup / Powder</option>
       </select>
 
-      {type === 'tablet' && <TabletForm />}
-      {type === 'med' && <MedForm />}
+      {type === 'tablet' && <TabletForm category={category} />}
+      {type === 'med' && <MedForm category={category} />}
     </div>
   );
 };

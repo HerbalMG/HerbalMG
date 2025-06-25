@@ -70,9 +70,11 @@ const getStatusFromQuantity = (quantity) => {
 const InventoryPage = () => {
   const [inventory, setInventory] = useState(initialData);
   const [search, setSearch] = useState("");
+  const [brandFilter, setBrandFilter] = useState("All");
   const [editingItem, setEditingItem] = useState(null);
   const [itemsPerPage, setItemsPerPage] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
 
   const handleDelete = (id) => {
     setInventory(inventory.filter((item) => item.id !== id));
@@ -85,36 +87,80 @@ const InventoryPage = () => {
       status: getStatusFromQuantity(editingItem.quantity),
     };
     setInventory((prev) =>
-      prev.map((item) =>
-        item.id === updatedItem.id ? updatedItem : item
-      )
+      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
     );
     setEditingItem(null);
   };
 
-  const filteredInventory = inventory.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return {
+          key,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
-  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
-  const displayedItems = filteredInventory.slice(
+  const filteredInventory = inventory.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesBrand = brandFilter === "All" || item.brand === brandFilter;
+    return matchesSearch && matchesBrand;
+  });
+
+  const sortedInventory = [...filteredInventory].sort((a, b) => {
+    const { key, direction } = sortConfig;
+    if (!key) return 0;
+    const valueA = a[key];
+    const valueB = b[key];
+    if (valueA < valueB) return direction === "asc" ? -1 : 1;
+    if (valueA > valueB) return direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedInventory.length / itemsPerPage);
+  const displayedItems = sortedInventory.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   return (
-    <div className="p-6  min-h-screen">
+    <div className="p-6 min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Medical Inventory</h1>
 
-      {/* Search & Pagination Settings */}
+      {/* Filters and Pagination Settings */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <input
           type="text"
           placeholder="Search by product name..."
           className="px-4 py-2 border rounded w-full md:w-1/3"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
         />
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm">Brand:</label>
+          <select
+            className="border rounded px-2 py-1"
+            value={brandFilter}
+            onChange={(e) => {
+              setBrandFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="All">All</option>
+            {[...new Set(inventory.map((item) => item.brand))].map((brand) => (
+              <option key={brand} value={brand}>
+                {brand}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="flex items-center gap-2">
           <label className="text-sm">Items per page:</label>
@@ -126,7 +172,7 @@ const InventoryPage = () => {
               setCurrentPage(1);
             }}
           >
-            {[10, 20, 30].map((n) => (
+            {[10, 20, 50].map((n) => (
               <option key={n}>{n}</option>
             ))}
           </select>
@@ -139,9 +185,24 @@ const InventoryPage = () => {
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="py-3 px-4 text-left border-b">Sr. No</th>
-              <th className="py-3 px-4 text-left border-b">Product Name</th>
-              <th className="py-3 px-4 text-left border-b">Quantity</th>
-              <th className="py-3 px-4 text-left border-b">Availability</th>
+              <th
+                className="py-3 px-4 text-left border-b cursor-pointer"
+                onClick={() => handleSort("name")}
+              >
+                Product Name
+              </th>
+              <th
+                className="py-3 px-4 text-left border-b cursor-pointer"
+                onClick={() => handleSort("quantity")}
+              >
+                Quantity
+              </th>
+              <th
+                className="py-3 px-4 text-left border-b cursor-pointer"
+                onClick={() => handleSort("status")}
+              >
+                Availability
+              </th>
               <th className="py-3 px-4 text-left border-b">Category</th>
               <th className="py-3 px-4 text-left border-b">Brand</th>
               <th className="py-3 px-4 text-left border-b">Actions</th>
@@ -193,7 +254,7 @@ const InventoryPage = () => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       <div className="flex justify-center mt-6 gap-2">
         {Array.from({ length: totalPages }, (_, i) => (
           <button
