@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getProducts, deleteProduct, updateProduct } from '../lib/productApi';
+import { getBrands } from '../lib/brandApi';
 
 const initialData = [
   {
@@ -61,35 +63,60 @@ const getStatusBadge = (status) => {
   }
 };
 
-const getStatusFromQuantity = (quantity) => {
-  if (quantity === 0) return "Out of Stock";
-  if (quantity < 50) return "Low Stock";
+const getStatusFromQuantity = (total_quantity) => {
+  if (total_quantity === 0) return "Out of Stock";
+  if (total_quantity < 50) return "Low Stock";
   return "In Stock";
 };
 
 const InventoryPage = () => {
-  const [inventory, setInventory] = useState(initialData);
+  const [inventory, setInventory] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
   const [editingItem, setEditingItem] = useState(null);
-  const [itemsPerPage, setItemsPerPage] = useState(3);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
 
-  const handleDelete = (id) => {
-    setInventory(inventory.filter((item) => item.id !== id));
+  useEffect(() => {
+    getProducts()
+      .then((products) => {
+        const productsWithStatus = products.map((p) => ({
+          ...p,
+          status: getStatusFromQuantity(p.total_quantity),
+        }));
+        setInventory(productsWithStatus);
+      })
+      .catch(() => setInventory([]));
+    getBrands().then(setBrands).catch(() => setBrands([]));
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await deleteProduct(id);
+      setInventory(inventory.filter((item) => item.id !== id));
+    } catch (err) {
+      alert('Failed to delete product');
+    }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
     const updatedItem = {
       ...editingItem,
-      status: getStatusFromQuantity(editingItem.quantity),
+      status: getStatusFromQuantity(editingItem.total_quantity),
     };
-    setInventory((prev) =>
-      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
-    );
-    setEditingItem(null);
+    try {
+      await updateProduct(updatedItem.id, updatedItem);
+      setInventory((prev) =>
+        prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+      );
+      setEditingItem(null);
+    } catch (err) {
+      alert('Failed to update product');
+    }
   };
 
   const handleSort = (key) => {
@@ -154,9 +181,9 @@ const InventoryPage = () => {
             }}
           >
             <option value="All">All</option>
-            {[...new Set(inventory.map((item) => item.brand))].map((brand) => (
-              <option key={brand} value={brand}>
-                {brand}
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.name}>
+                {brand.name}
               </option>
             ))}
           </select>
@@ -193,7 +220,7 @@ const InventoryPage = () => {
               </th>
               <th
                 className="py-3 px-4 text-left border-b cursor-pointer"
-                onClick={() => handleSort("quantity")}
+                onClick={() => handleSort("total_quantity")}
               >
                 Quantity
               </th>
@@ -215,7 +242,7 @@ const InventoryPage = () => {
                   {(currentPage - 1) * itemsPerPage + index + 1}
                 </td>
                 <td className="py-3 px-4 border-b">{item.name}</td>
-                <td className="py-3 px-4 border-b">{item.quantity}</td>
+                <td className="py-3 px-4 border-b">{item.total_quantity}</td>
                 <td className="py-3 px-4 border-b">
                   <span
                     className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusBadge(
@@ -287,19 +314,19 @@ const InventoryPage = () => {
               <input
                 className="w-full border px-3 py-2 rounded"
                 type="number"
-                value={editingItem.quantity}
+                value={editingItem.total_quantity}
                 onChange={(e) => {
-                  const quantity = Number(e.target.value);
+                  const total_quantity = Number(e.target.value);
                   setEditingItem({
                     ...editingItem,
-                    quantity,
-                    status: getStatusFromQuantity(quantity),
+                    total_quantity,
+                    status: getStatusFromQuantity(total_quantity),
                   });
                 }}
               />
               <p className="text-sm text-gray-600">
                 Availability:{" "}
-                <strong>{getStatusFromQuantity(editingItem.quantity)}</strong>
+                <strong>{getStatusFromQuantity(editingItem.total_quantity)}</strong>
               </p>
               <input
                 className="w-full border px-3 py-2 rounded"

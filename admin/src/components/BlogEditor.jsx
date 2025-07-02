@@ -1,4 +1,3 @@
-// BlogEditor.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import EditorJS from '@editorjs/editorjs';
@@ -6,6 +5,8 @@ import Header from '@editorjs/header';
 import List from '@editorjs/list';
 import ImageTool from '@editorjs/image';
 import Paragraph from '@editorjs/paragraph';
+
+import imageCompression from 'browser-image-compression';
 
 // Tools configuration
 const EDITOR_JS_TOOLS = {
@@ -20,7 +21,7 @@ const BlogEditor = ({ blog = {}, onSave, onCancel }) => {
   const [des, setDes] = useState(blog.des || '');
   const [tags, setTags] = useState(blog.tags || []);
   const [banner, setBanner] = useState(blog.banner || '');
-  const [bannerFile, setBannerFile] = useState(null);
+  // const [bannerFile, setBannerFile] = useState(null);
   const tagInputRef = useRef();
   const characterLimit = 200;
   const tagLimit = 5;
@@ -43,16 +44,44 @@ const BlogEditor = ({ blog = {}, onSave, onCancel }) => {
         editorInstance.current = null;
       }
     };
-    // eslint-disable-next-line
   }, []);
 
-  const handleBannerUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setBannerFile(file);
-      setBanner(URL.createObjectURL(file));
-    }
-  };
+
+
+  const handleBannerUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    toast.loading('Uploading banner...');
+    
+    const compressed = await imageCompression(file, {
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 1200,
+      useWebWorker: true,
+    });
+
+    const formData = new FormData();
+    formData.append('image', compressed);
+
+    const response = await fetch('http://localhost:3001/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error('Upload failed');
+
+    const data = await response.json();
+    setBanner(data.imageUrl); 
+
+    toast.dismiss();
+    toast.success('Banner uploaded!');
+  } catch (err) {
+    // console.error('Image upload failed', err);
+    toast.dismiss();
+    toast.error('Failed to upload banner');
+  }
+};
 
   const handleAddTag = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -102,7 +131,7 @@ const BlogEditor = ({ blog = {}, onSave, onCancel }) => {
       };
       onSave(newBlog);
     } catch (err) {
-      console.error('Failed to save content:', err);
+      // console.error('Failed to save content:', err);
       toast.error('Could not save blog content');
     }
   };
@@ -161,7 +190,7 @@ const BlogEditor = ({ blog = {}, onSave, onCancel }) => {
             <span key={idx} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm flex items-center">
               {tag}
               <button type="button" className="ml-1 text-red-500" onClick={() => handleRemoveTag(idx)}>
-                ×
+                X
               </button>
             </span>
           ))}

@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import BlogEditor from '../components/BlogEditor';
-import BlogReader from '../components/BlogReader'; // <-- Make sure this file exists
-
-const BLOGS_KEY = 'admin_blogs';
-
-const getBlogs = () => {
-  const blogs = localStorage.getItem(BLOGS_KEY);
-  return blogs ? JSON.parse(blogs) : [];
-};
-
-const saveBlogs = (blogs) => {
-  localStorage.setItem(BLOGS_KEY, JSON.stringify(blogs));
-};
+import BlogReader from '../components/BlogReader'; 
+import { getBlogs, createBlog, updateBlog, deleteBlog } from '../lib/blogApi';
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -20,20 +10,29 @@ const Blog = () => {
   const [selectedBlog, setSelectedBlog] = useState(null);
 
   useEffect(() => {
-    setBlogs(getBlogs());
+    getBlogs().then(setBlogs).catch(() => setBlogs([]));
   }, []);
 
-  const handleSave = (blog) => {
+  const handleSave = async (blog) => {
     let updatedBlogs;
+    const payload = {
+      image_url: blog.banner,
+      title: blog.title,
+      short_description: blog.des,
+      content: blog.content,
+      tags: blog.tags,
+      id: blog.id,
+      date: blog.date,
+    };
+    console.log('Blog payload:', payload);
     if (editingBlog) {
-      updatedBlogs = blogs.map((b) => (b.id === blog.id ? blog : b));
+      const updated = await updateBlog(blog.id, payload);
+      updatedBlogs = blogs.map((b) => (b.id === blog.id ? updated : b));
     } else {
-      blog.id = Date.now();
-      blog.date = new Date().toLocaleDateString();
-      updatedBlogs = [blog, ...blogs];
+      const created = await createBlog({ ...payload, date: new Date().toLocaleDateString() });
+      updatedBlogs = [created, ...blogs];
     }
     setBlogs(updatedBlogs);
-    saveBlogs(updatedBlogs);
     setShowEditor(false);
     setEditingBlog(null);
   };
@@ -43,10 +42,9 @@ const Blog = () => {
     setShowEditor(true);
   };
 
-  const handleDelete = (id) => {
-    const updatedBlogs = blogs.filter((b) => b.id !== id);
-    setBlogs(updatedBlogs);
-    saveBlogs(updatedBlogs);
+  const handleDelete = async (id) => {
+    await deleteBlog(id);
+    setBlogs(blogs.filter((b) => b.id !== id));
   };
 
   const handleNew = () => {
@@ -97,7 +95,7 @@ const Blog = () => {
                   <div className="font-semibold text-lg">{blog.title}</div>
                   <div className="text-gray-500 text-sm">{blog.des}</div>
                   <div className="text-xs text-gray-400 mt-1">
-                    Published on: {blog.date || 'N/A'}
+                    Published on: {blog.created_at ? new Date(blog.created_at).toLocaleDateString() : 'Unknown'}
                   </div>
                   {blog.tags && blog.tags.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">

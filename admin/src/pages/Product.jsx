@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import EquipmentForm from '../components/EquipmentForm';
-import MedicineForm from '../components/MedicineForm';
+import MedicineType from '../components/MedicineType';
 import BrandForm from '@/components/BrandForm';
 import BannerManager from '@/components/BannerManager';
 import RefrenceBook from '@/components/RefrenceBook';
+import DoctorForm from '@/components/DoctorForm';
 
 const TABS = {
   PRODUCT: 'Product',
   BRAND: 'Brand',
   BOOKS: 'Books',
   BANNER: 'Banner',
+  DOCTOR: 'Doctors'
 };
 
 const Product = () => {
@@ -30,13 +31,13 @@ const Product = () => {
                 className="w-full border rounded p-2"
               >
                 <option value="">-- Select Category --</option>
-                <option value="ayurvedic">Ayurvedic Medicine</option>
-                <option value="homeopathic">Homeopathic Medicine</option>
-                <option value="unani">Unani Medicine</option>
+                <option value="Ayurvedic">Ayurvedic Medicine</option>
+                <option value="Homeopathic">Homeopathic Medicine</option>
+                <option value="Unani">Unani Medicine</option>
               </select>
             </div>
-            {(category === 'ayurvedic' || category === 'homeopathic' || category === 'unani') && (
-              <MedicineForm category={category} />
+            {(category === 'Ayurvedic' || category === 'Homeopathic' || category === 'Unani') && (
+              <MedicineType category={category} />
             )}
           </div>
         );
@@ -59,6 +60,13 @@ const Product = () => {
           <div>
             <h2 className="text-2xl font-semibold mb-6">Banner</h2>
             <BannerManager />
+          </div>
+        );
+        case TABS.DOCTOR:
+        return (
+          <div>
+            <h2 className="text-2xl font-semibold mb-6">Doctors</h2>
+            <DoctorForm />
           </div>
         );
       default:

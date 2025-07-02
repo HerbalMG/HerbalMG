@@ -1,42 +1,40 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 
 // Sample customer data (replace with real data or API)
 const initialCustomers = [
   {
-    id: 'CUST001',
-    name: 'Alice Johnson',
-    mobile: '1234567890',
-    email: 'alice@example.com',
-    address: '1234 Elm Street, Springfield, IL 62704',
+    id: "CUST001",
+    name: "Alice Johnson",
+    mobile: "1234567890",
+    email: "alice@example.com",
+    address: "1234 Elm Street, Springfield, IL 62704",
     active: true,
-    createdAt: '2024-01-10',
+    createdAt: "2024-01-10",
   },
   {
-    id: 'CUST002',
-    name: 'Bob Smith',
-    mobile: '9876543210',
-    email: 'bob@example.com',
-    address: '5678 Oak Avenue, Metropolis, NY 10001',
+    id: "CUST002",
+    name: "Bob Smith",
+    mobile: "9876543210",
+    email: "bob@example.com",
+    address: "5678 Oak Avenue, Metropolis, NY 10001",
     active: true,
-    createdAt: '2024-03-15',
+    createdAt: "2024-03-15",
   },
 ];
-
 
 export default function CustomerDetails() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const [modal, setModal] = useState({ type: null, customer: null });
 
-  const [startDate, setStartDate] = useState('');
-const [endDate, setEndDate] = useState('');
-
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -49,42 +47,38 @@ const [endDate, setEndDate] = useState('');
 
   const closeModal = () => setModal({ type: null, customer: null });
 
-  const deactivateCustomer = id => {
-    setCustomers(custs =>
-      custs.map(c => (c.id === id ? { ...c, active: false } : c))
+  const deactivateCustomer = (id) => {
+    setCustomers((custs) =>
+      custs.map((c) => (c.id === id ? { ...c, active: false } : c))
     );
     closeModal();
   };
 
-  const deleteCustomer = id => {
-    setCustomers(custs => custs.filter(c => c.id !== id));
+  const deleteCustomer = (id) => {
+    setCustomers((custs) => custs.filter((c) => c.id !== id));
     closeModal();
   };
 
   const filtered = useMemo(() => {
-  return customers
-    .filter(c => c.active)
-    .filter(c => {
-      const s = search.toLowerCase();
-      return (
-        c.name.toLowerCase().includes(s) ||
-        c.id.toLowerCase().includes(s) ||
-        c.mobile.includes(search) ||
-        c.email.toLowerCase().includes(s)
-      );
-    })
-    .filter(c => {
-      if (!startDate && !endDate) return true;
-      const date = new Date(c.createdAt);
-      const from = startDate ? new Date(startDate) : null;
-      const to = endDate ? new Date(endDate) : null;
-      return (
-        (!from || date >= from) &&
-        (!to || date <= to)
-      );
-    });
-}, [customers, search, startDate, endDate]);
-
+    return customers
+      .filter((c) => c.active)
+      .filter((c) => {
+        const s = search.toLowerCase();
+        return (
+          c.name.toLowerCase().includes(s) ||
+          c.id.toLowerCase().includes(s) ||
+          c.mobile.includes(search) ||
+          c.email.toLowerCase().includes(s)
+        );
+      })
+      .filter((c) => {
+        if (!startDate && !endDate) return true;
+        const date = new Date(c.createdAt);
+        const from = startDate ? new Date(startDate) : null;
+        const to = endDate ? new Date(endDate) : null;
+        return (!from || date >= from) && (!to || date <= to);
+      });
+  }, [customers, search, startDate, endDate]);
 
   const pageCount = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice(
@@ -106,54 +100,52 @@ const [endDate, setEndDate] = useState('');
               className="border px-3 py-2"
               placeholder="Name / ID / mobile / email"
               value={search}
-              onChange={e => {
+              onChange={(e) => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
             />
             <label>
-  Items per page:
-  <select
-    value={itemsPerPage}
-    className="border px-2 py-1 ml-2"
-    onChange={e => {
-      setItemsPerPage(Number(e.target.value));
-      setCurrentPage(1);
-    }}
-  >
-    <option value={10}>10</option>
-    <option value={25}>25</option>
-    <option value={50}>50</option>
-  </select>
-</label>
+              Items per page:
+              <select
+                value={itemsPerPage}
+                className="border px-2 py-1 ml-2"
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </label>
 
-<label className="ml-4">
-  Start date:
-  <input
-    type="date"
-    className="border px-2 py-1 ml-2"
-    value={startDate}
-    onChange={e => {
-      setStartDate(e.target.value);
-      setCurrentPage(1);
-    }}
-  />
-</label>
+            <label className="ml-4">
+              Start date:
+              <input
+                type="date"
+                className="border px-2 py-1 ml-2"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </label>
 
-<label className="ml-4">
-  End date:
-  <input
-    type="date"
-    className="border px-2 py-1 ml-2"
-    value={endDate}
-    onChange={e => {
-      setEndDate(e.target.value);
-      setCurrentPage(1);
-    }}
-  />
-</label>
-
-
+            <label className="ml-4">
+              End date:
+              <input
+                type="date"
+                className="border px-2 py-1 ml-2"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </label>
           </div>
 
           <table className="w-full border text-sm">
@@ -182,8 +174,10 @@ const [endDate, setEndDate] = useState('');
                     key={c.id}
                     serial={(currentPage - 1) * itemsPerPage + idx + 1}
                     customer={c}
-                    onDeactivate={() => setModal({ type: 'deactivate', customer: c })}
-                    onDelete={() => setModal({ type: 'delete', customer: c })}
+                    onDeactivate={() =>
+                      setModal({ type: "deactivate", customer: c })
+                    }
+                    onDelete={() => setModal({ type: "delete", customer: c })}
                   />
                 ))
               )}
@@ -194,30 +188,34 @@ const [endDate, setEndDate] = useState('');
             <Pagination
               currentPage={currentPage}
               pageCount={pageCount}
-              onPageChange={p => setCurrentPage(p)}
+              onPageChange={(p) => setCurrentPage(p)}
             />
             <div className="text-sm text-gray-700">
-              Page {currentPage} of {pageCount}, total entries: {filtered.length}
+              Page {currentPage} of {pageCount}, total entries:{" "}
+              {filtered.length}
             </div>
           </div>
 
           {modal.type && (
             <ConfirmModal
               title={
-                modal.type === 'deactivate'
+                modal.type === "deactivate"
                   ? `Deactivate "${modal.customer.name}"?`
                   : `Delete "${modal.customer.name}"?`
               }
-              confirmLabel={modal.type === 'deactivate' ? 'Deactivate' : 'Delete'}
+              confirmLabel={
+                modal.type === "deactivate" ? "Deactivate" : "Delete"
+              }
               onConfirm={() =>
-                modal.type === 'deactivate'
+                modal.type === "deactivate"
                   ? deactivateCustomer(modal.customer.id)
                   : deleteCustomer(modal.customer.id)
               }
               onCancel={closeModal}
             >
-              Are you sure you want to{' '}
-              {modal.type === 'deactivate' ? 'deactivate' : 'delete'} this customer?
+              Are you sure you want to{" "}
+              {modal.type === "deactivate" ? "deactivate" : "delete"} this
+              customer?
             </ConfirmModal>
           )}
         </>
@@ -240,22 +238,21 @@ function CustomerRow({ serial, customer, onDeactivate, onDelete }) {
       <td className="p-2 border">
         {customer.address.length > limit && !expanded
           ? `${customer.address.slice(0, limit)}… `
-          : customer.address}{' '}
+          : customer.address}{" "}
         {customer.address.length > limit && (
           <button
             className="text-blue-600 underline"
-            onClick={() => setExpanded(e => !e)}
+            onClick={() => setExpanded((e) => !e)}
           >
-            {expanded ? 'Show less' : 'Show more'}
+            {expanded ? "Show less" : "Show more"}
           </button>
         )}
       </td>
       <td className="p-2 border">
-  {new Date(customer.createdAt).toLocaleDateString()}
-</td>
+        {new Date(customer.createdAt).toLocaleDateString()}
+      </td>
 
       <td className="p-2 border space-x-2 text-sm">
-        
         <button className="text-red-600 hover:underline" onClick={onDelete}>
           Delete
         </button>
@@ -267,13 +264,6 @@ function CustomerRow({ serial, customer, onDeactivate, onDelete }) {
 function Pagination({ currentPage, pageCount, onPageChange }) {
   return (
     <div className="flex space-x-2">
-      {/* <button
-        disabled={currentPage === 1}
-        onClick={() => onPageChange(1)}
-        className="px-2 py-1 border disabled:opacity-50"
-      >
-        « First
-      </button> */}
       <button
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
@@ -281,9 +271,7 @@ function Pagination({ currentPage, pageCount, onPageChange }) {
       >
         ‹ Prev
       </button>
-      <span className="px-2 py-1 border">
-        {currentPage}
-      </span>
+      <span className="px-2 py-1 border">{currentPage}</span>
       <button
         disabled={currentPage === pageCount}
         onClick={() => onPageChange(currentPage + 1)}
@@ -291,13 +279,6 @@ function Pagination({ currentPage, pageCount, onPageChange }) {
       >
         Next ›
       </button>
-      {/* <button
-        disabled={currentPage === pageCount}
-        onClick={() => onPageChange(pageCount)}
-        className="px-2 py-1 border disabled:opacity-50"
-      >
-        Last »
-      </button> */}
     </div>
   );
 }
@@ -308,7 +289,7 @@ function ConfirmModal({ title, children, confirmLabel, onConfirm, onCancel }) {
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4"
-      onClick={e => e.target === e.currentTarget && onCancel()}
+      onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
       <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full">
         <h2 className="text-xl font-semibold mb-4">{title}</h2>
@@ -320,9 +301,9 @@ function ConfirmModal({ title, children, confirmLabel, onConfirm, onCancel }) {
           <button
             onClick={onConfirm}
             className={`px-4 py-2 rounded ${
-              confirmLabel === 'Delete'
-                ? 'bg-red-600 text-white'
-                : 'bg-yellow-500 text-white'
+              confirmLabel === "Delete"
+                ? "bg-red-600 text-white"
+                : "bg-yellow-500 text-white"
             }`}
           >
             {confirmLabel}
