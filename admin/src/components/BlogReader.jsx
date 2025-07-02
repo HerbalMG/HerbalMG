@@ -1,5 +1,3 @@
-import React from 'react';
-
 const renderBlock = (block, index) => {
   try {
     switch (block.type) {
@@ -70,7 +68,7 @@ const renderBlock = (block, index) => {
         return null; // safely ignore unknown blocks
     }
   } catch (err) {
-    console.error('Error rendering block:', block, err);
+    // console.error('Error rendering block:', block, err);
     return null;
   }
 };
@@ -91,9 +89,9 @@ const BlogReader = ({ blog, onBack }) => {
       </button>
 
       <div className="max-w-4xl mx-auto bg-white p-8 rounded shadow-lg">
-        {blog.banner && (
+        {blog.image_url && (
           <img
-            src={blog.banner}
+            src={blog.image_url}
             alt={blog.title}
             className="w-full h-80 object-cover rounded mb-6"
           />
@@ -101,9 +99,9 @@ const BlogReader = ({ blog, onBack }) => {
 
         <h1 className="text-4xl font-bold mb-3">{blog.title}</h1>
         <p className="text-gray-500 text-sm mb-5">
-          Published on: {blog.date || 'Unknown'}
+          Published on: {blog.created_at ? new Date(blog.created_at).toLocaleDateString() : 'Unknown'}
         </p>
-        <p className="text-lg mb-8 text-gray-700">{blog.des}</p>
+        <p className="text-lg mb-8 text-gray-700">{blog.short_description}</p>
 
         {blog.tags && blog.tags.length > 0 && (
           <div className="flex flex-wrap gap-3 mb-8">

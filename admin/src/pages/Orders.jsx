@@ -1,5 +1,3 @@
-// OrdersPro.jsx
-
 import { useState, useMemo, useEffect } from 'react';
 
 const statusOptions = ['Ordered', 'Shipped', 'Delivered', 'Returned', 'Refunded'];
@@ -11,7 +9,7 @@ const initialOrders = [
     customerName: 'John Doe',
     date: '2025-06-18',
     price: 149.99,
-    status: 'Ordered',
+    status: 'Shipped',
     items: 'Aspirin x2, Thermometer x1, Bandages x5, Hand Sanitizer x1',
     address: '123 Main St, Springfield',
     notes: '',
@@ -214,6 +212,19 @@ export default function OrdersPro() {
   };
 
   useEffect(() => setCurrentPage(1), [filterStatus, searchTerm, entriesPerPage, dateFrom, dateTo]);
+
+  const fetchOrders = () => {
+    return initialOrders;
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newOrders = fetchOrders(); // Simulated fetch
+      setOrders(newOrders);
+    }, 60000); // Refresh every 60 seconds
+
+    return () => clearInterval(interval); // Clear interval on unmount
+  }, []);
 
   return (
     <div className="p-6">

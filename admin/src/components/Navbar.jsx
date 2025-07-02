@@ -1,5 +1,4 @@
-// components/Navbar.jsx
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const pathNameMap = {
   "/": "Dashboard",
@@ -12,14 +11,26 @@ const pathNameMap = {
   "/payment": "Payment",
 };
 
-const Navbar = () => {
+const Navbar = ({ onLogout }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const title = pathNameMap[location.pathname] || "Dashboard";
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    if (onLogout) onLogout();
+    navigate("/");
+  };
 
   return (
     <header className="w-full bg-white shadow px-6 py-4 flex justify-between items-center">
       <div className="text-lg font-semibold">{title}</div>
-      <button className="bg-red-500 text-white p-2 rounded">Logout</button>
+      <button 
+        onClick={handleLogout} 
+        className="bg-red-500 text-white p-2 rounded"
+      >
+        Logout
+      </button>
     </header>
   );
 };
