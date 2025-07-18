@@ -5,7 +5,7 @@ function Ayurvedic() {
   return (
     <>
     <div>Ayurvedic</div>
-    <BrandFilterAside/>
+{/*     <BrandFilterAside/> */}
     </>
   )
 }
