@@ -1,139 +1,67 @@
-import React from "react";
 import { Link } from "react-router-dom";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaYoutube,
+  FaXTwitter,
+} from "react-icons/fa6";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-100 text-black pt-10 pb-6 mt-10">
-      {/* Top Section */}
-      <div className="container mx-auto px-4 mb-10">
-        <div className="flex flex-col md:flex-row items-start md:items-center text-center md:text-left gap-6">
-          <h2 className="text-2xl font-bold md:w-1/3">HerbalMG</h2>
-          <p className="mt-2 text-sm text-black md:w-2/3">
-            At HerbalMG, we are committed to making healthcare simple,
-            accessible, and affordable for everyone. As a leading online medical
-            store, we offer a wide range of genuine medicines, health
-            supplements, and wellness products—all available at your fingertips.
+    <footer className="bg-white text-black pt-6 pb-6 mt-16 border-t-2 border-green-700 ">
+      <div className="container mx-auto px-4 space-y-6">
+
+        {/* Row 1: Logo and Description side by side */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h2 className="text-2xl font-bold text-green-600">HerbalMG</h2>
+          <p className="text-sm sm:text-base text-gray-900 max-w-3xl">
+            HerbalMG is your trusted online medical store, offering genuine medicines,
+            health supplements, and wellness products — delivered with care and convenience.
           </p>
-        </div>                
-      </div>
-
-      {/* Bottom Section */}
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {/* Company */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Company</h3>
-          <ul className="space-y-2 text-sm text-black">
-            <li>
-              <Link to="/about-us" className="hover:text-black">
-                About
-              </Link>
-            </li>
-            <li>
-              <Link to="/testimonial" className="hover:text-black">
-                Words from Our Customers
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" className="hover:text-black">
-                Contact
-              </Link>
-            </li>
-            <li>
-              <Link to="/blog" className="hover:text-black">
-                Blogs
-              </Link>
-            </li>
-          </ul>
         </div>
 
-        {/* Our Policies */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Our Policies</h3>
-          <ul className="space-y-2 text-sm text-black">
-            <li>
-              <Link to="/terms-and-conditions" className="hover:text-black">
-                Terms & Conditions
-              </Link>
-            </li>
-            <li>
-              <Link to="/privacy-policy" className="hover:text-black">
-                Privacy Policy
-              </Link>
-            </li>
-            <li>
-              <Link to="/return-and-refund-policy" className="hover:text-black">
-                Return & Refund Policy
-              </Link>
-            </li>
-            <li>
-              <Link to="/faq" className="hover:text-black">
-                {" "}
-                FAQs
-              </Link>
-            </li>
-          </ul>
+        {/* Row 2: Links and Social Media */}
+        <div className="flex flex-wrap justify-between items-center gap-4  pt-4">
+          {/* Navigation Links */}
+          <div className="flex flex-wrap gap-4 text-sm sm:text-base font-medium">
+            <Link to="/about-us" className="hover:text-orange-600 hover:underline">About</Link>
+            <Link to="/terms-and-conditions" className="hover:text-orange-600 hover:underline">Terms & Conditions</Link>
+            <Link to="/privacy-policy" className="hover:text-orange-600 hover:underline">Privacy Policy</Link>
+            <Link to="/return-and-refund-policy" className="hover:text-orange-600 hover:underline">Return & Refund Policy</Link>
+            <Link to="/faq" className="hover:text-orange-600 hover:underline">FAQs</Link>
+          </div>
+
+          {/* Social Media Icons */}
+          <div className="flex space-x-4 text-xl sm:text-2xl mt-2 sm:mt-0">
+            <a href="#" target="_blank" aria-label="Facebook">
+              <FaFacebookF className="text-[#1877F2] hover:text-black transition" />
+            </a>
+            <a href="#" target="_blank" aria-label="Instagram">
+              <FaInstagram className="text-[#E4405F] hover:text-black transition" />
+            </a>
+            <a href="#" target="_blank" aria-label="YouTube">
+              <FaYoutube className="text-[#FF0000] hover:text-black transition" />
+            </a>
+            <a href="#" target="_blank" aria-label="X (Twitter)">
+              <FaXTwitter className="text-black hover:text-[#1DA1F2] transition" />
+            </a>
+          </div>
         </div>
 
-        {/* Social */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Social</h3>
-          <ul className="space-y-2 text-sm text-black">
-            <li>
-              <a href="#" className="hover:text-black">
-                Facebook
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-black">
-                Instagram
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-black">
-                YouTube
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-black">
-                Twitter
-              </a>
-            </li>
-          </ul>
+        {/* Row 3: Bottom Note */}
+        <div className="text-center text-gray-700 text-xs font-bold leading-relaxed pt-4 ">
+          &copy; {new Date().getFullYear()} HerbalMG. All rights reserved. 
+          Dispensed in accordance with the Drugs and Cosmetics Act, 1940 & Rules, 1945.
+          Crafted by{" "}
+          <a
+            href="https://portfolio-shreyam91s-projects.vercel.app/"
+            className="text-green-500 hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            @Developer
+          </a>
         </div>
-
-        {/* Newsletter */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
-          <p className="text-sm text-black mb-4">
-            Subscribe now for free to receive exclusive health and fitness tips,
-            and be the first to know about our latest offers and deals!
-          </p>
-          <form className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="email"
-              placeholder="Your email"
-              className="px-3 py-2 rounded text-black focus:outline-none"
-            />
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">
-              Subscribe
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Bottom note */}
-      <div className="text-center text-gray-400 text-xs mt-10">
-        &copy; {new Date().getFullYear()} Herbal MG. All rights reserved. All medicines are dispensed in compliance with the Drugs and Cosmetics Act, 1940 and Drugs and Cosmetics Rules, 1945.
-        <br />
-        Crafted with 💙 by{" "}
-        <a
-          href="https://portfolio-shreyam91s-projects.vercel.app/"
-          className="text-blue-400 hover:underline"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          @Shreyam
-        </a>
       </div>
     </footer>
   );

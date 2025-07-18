@@ -45,7 +45,7 @@ const products = [
   },
 ];
 
-const DealsOfTheDay = () => {
+const Trending = () => {
   const [cart, setCart] = useState([]);
   const [countdown, setCountdown] = useState("");
   const scrollRef = useRef();
@@ -71,7 +71,7 @@ const DealsOfTheDay = () => {
 
   const handleAddToCart = (product) => {
     setCart((prev) => [...prev, product.id]);
-    alert(`Added "${product.name}" to cart!`);
+    alert(`Added "₹{product.name}" to cart!`);
   };
 
   const scroll = (direction) => {
@@ -85,9 +85,9 @@ const DealsOfTheDay = () => {
   };
 
   return (
-    <div className="mt-5">
-      <div className=" mb-6">
-        <h2 className="text-3xl font-bold">🔥 Maximum Discount</h2>
+    <div className="mt-2">
+      <div className="text- mb-6">
+        <h2 className="text-3xl font-bold"> Explore our Top Products </h2>
         {/* <p className="text-gray-600 mt-1">
           ⏳ Time left today: <span className="font-mono text-red-600">{countdown}</span>
         </p> */}
@@ -157,4 +157,4 @@ const DealsOfTheDay = () => {
   );
 };
 
-export default DealsOfTheDay;
+export default Trending;

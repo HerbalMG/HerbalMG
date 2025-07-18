@@ -95,15 +95,15 @@ const About = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Top Section */}
       <div className=" text-black py-12 px-6 text-center">
-        <h1 className="text-4xl font-bold text-blue-700">Welcome to HerbalMG</h1>
-        <p className="mt-2 text-lg">Your trusted source for natural wellness</p>
+        <h1 className="text-4xl font-bold text-green-700">Welcome to HerbalMG</h1>
+        <p className="mt-2 text-xl text-orange-500">Your trusted source for natural wellness</p>
       </div>
 
       {/* Two Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-6 py-12 max-w-6xl mx-auto">
         {/* Left Column */}
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+          <h2 className="text-2xl font-semibold text-green-600 mb-2">
             Our MISSION
           </h2>
           <p className="text-gray-500 leading-relaxed">
@@ -119,7 +119,7 @@ const About = () => {
             trustworthy partner on your journey to wellness.
           </p>
 
-          <h2 className="text-2xl font-semibold text-gray-800 mt-4">
+          <h2 className="text-2xl font-semibold text-green-600 mt-4">
             Our VISION
           </h2>
           <p className="text-gray-500 leading-relaxed">
@@ -136,7 +136,7 @@ const About = () => {
 
         {/* Right Column */}
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+          <h2 className="text-2xl font-semibold text-green-600 mb-2 ">
             ABOUT US
           </h2>
           <p className="text-gray-500 leading-relaxed">
