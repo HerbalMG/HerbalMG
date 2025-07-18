@@ -1,58 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-
-const blogData = [
-  {
-    id: 1,
-    title: 'Benefits of Herbal Medicine',
-    date: '2025-05-10',
-    content: `Herbal medicine promotes wellness naturally. It includes a variety of plants and natural ingredients used in healing. Learn more at [WHO Guidelines](https://www.who.int).`,
-    category: 'Health',
-    image: 'https://source.unsplash.com/800x400/?herbs',
-  },
-  {
-    id: 2,
-    title: 'Using Herbal Supplements Safely',
-    date: '2025-04-20',
-    content: `Herbal supplements must be used carefully. Always consult a physician before using.
-    In today’s fast-paced world, maintaining a strong immune system is more important than ever. Your immune system is your body’s defense against infections and illnesses. Luckily, boosting your immunity doesn’t have to be complicated.
-
-Eat a Balanced Diet:
-Incorporate plenty of fruits, vegetables, whole grains, and lean proteins into your meals. Foods rich in vitamins C and D, zinc, and antioxidants help support immune function.
-
-Stay Hydrated:
-Drinking enough water helps your body flush out toxins and keeps your cells functioning optimally.
-
-Get Enough Sleep:
-Quality sleep is crucial for immune health. Aim for 7-9 hours per night to allow your body to repair and regenerate.
-
-Exercise Regularly:
-Physical activity increases blood flow, helping immune cells circulate and do their job more effectively.
-
-Manage Stress:
-Chronic stress can weaken your immune system. Practice relaxation techniques like meditation, deep breathing, or yoga to keep stress levels in check.
-
-By making these simple lifestyle changes, you can naturally strengthen your immune system and improve your overall health. Start small, stay consistent, and your body will thank you!`
-    ,
-    category: 'Health',
-    image: 'https://source.unsplash.com/800x400/?supplements',
-  },
-  {
-    id: 3,
-    title: 'Top 5 Herbs for Immunity',
-    date: '2025-05-05',
-    content: `These herbs can improve your immunity: Turmeric, Ginger, Garlic, Echinacea, and Tulsi.`,
-    category: 'Immunity',
-    image: 'https://source.unsplash.com/800x400/?immunity',
-  },
-];
 
 const BlogPost = () => {
   const { id } = useParams();
-  const blog = blogData.find((b) => b.id === parseInt(id));
+  const [blog, setBlog] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  if (!blog) {
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetch(`http://localhost:3001/api/blog/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Blog not found');
+        return res.json();
+      })
+      .then(data => {
+        setBlog(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center mt-20 text-gray-500">Loading blog...</div>;
+  }
+
+  if (error || !blog) {
     return (
       <div className="text-center mt-20">
         <h2 className="text-2xl font-semibold">Blog Not Found</h2>
@@ -63,11 +41,17 @@ const BlogPost = () => {
     );
   }
 
-  const related = blogData.filter(
-    (b) => b.category === blog.category && b.id !== blog.id
-  );
-
   const shareUrl = window.location.href;
+
+  // Parse blog.content if it's a string
+  let parsedContent = blog.content;
+  if (typeof parsedContent === 'string') {
+    try {
+      parsedContent = JSON.parse(parsedContent);
+    } catch (e) {
+      // fallback: leave as string
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 lg:px-12">
@@ -83,11 +67,17 @@ const BlogPost = () => {
 
       {/* Meta Row */}
       <div className="flex flex-wrap justify-between items-center text-sm text-gray-500 border-b pb-4 mb-6 gap-2">
-        <div className="flex gap-4">
-          <span>{new Date(blog.date).toDateString()}</span>
-          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
-            {blog.category}
-          </span>
+        <div className="flex gap-4 items-center flex-wrap">
+          {/* <span>{new Date(blog.created_at).toDateString()}</span> */}
+          {blog.tags && blog.tags.length > 0 && (
+            <span className="flex gap-2 flex-wrap">
+              {blog.tags.map((tag, idx) => (
+                <span key={idx} className="bg-blue-50 text-green-700 px-2 py-0.5 rounded-full text-s font-semibold">
+                  {tag}
+                </span>
+              ))}
+            </span>
+          )}
         </div>
         {/* Share Buttons */}
         <div className="flex gap-3 text-sm">
@@ -123,40 +113,39 @@ const BlogPost = () => {
         {/* Left: Blog content */}
         <div className="lg:w-2/3">
           <img
-            src={blog.image}
+            src={blog.image_url}
             alt={blog.title}
             className="w-full h-64 object-cover rounded-lg mb-6"
           />
           <div className="prose max-w-none text-gray-800">
-            {/* Simple paragraph splitting */}
-            {blog.content.split('\n').map((para, idx) => (
-              <p key={idx}>{para}</p>
-            ))}
+            {/* Render Editor.js block content */}
+            {parsedContent && parsedContent.blocks && parsedContent.blocks.length > 0 ? (
+              parsedContent.blocks.map((block, idx) => {
+                switch (block.type) {
+                  case 'header':
+                    const Tag = `h${block.data.level || 3}`;
+                    return <Tag key={idx} className="mt-6 mb-2 font-bold">{block.data.text}</Tag>;
+                  case 'paragraph':
+                    return <p key={idx} className="mb-4">{block.data.text}</p>;
+                  case 'list':
+                    return (
+                      <ul key={idx} className="list-disc ml-6 mb-4">
+                        {block.data.items.map((item, i) => (
+                          <li key={i}>{item.content || item}</li>
+                        ))}
+                      </ul>
+                    );
+                  default:
+                    return null;
+                }
+              })
+            ) : (
+              <p>{typeof blog.content === 'string' ? blog.content : JSON.stringify(blog.content)}</p>
+            )}
           </div>
         </div>
 
-        {/* Right: Related Blogs */}
-        <aside className="lg:w-1/3">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Related Blogs</h3>
-          {related.length === 0 && <p className="text-sm text-gray-500">No related blogs.</p>}
-          <div className="space-y-4">
-            {related.map((item) => (
-              <Link
-                to={`/blog/${item.id}`}
-                key={item.id}
-                className="block border rounded-lg p-3 hover:shadow transition"
-              >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="h-28 w-full object-cover rounded mb-2"
-                />
-                <h4 className="text-sm font-semibold text-blue-700">{item.title}</h4>
-                <p className="text-xs text-gray-500">{new Date(item.date).toDateString()}</p>
-              </Link>
-            ))}
-          </div>
-        </aside>
+        {/* Right: Related Blogs (optional, could fetch more blogs and filter by tag) */}
       </div>
     </div>
   );

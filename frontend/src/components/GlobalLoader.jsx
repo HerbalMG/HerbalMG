@@ -1,4 +1,3 @@
-import React from 'react';
 import { useLoading } from '../context/LoadingContext';
 
 const GlobalLoader = () => {

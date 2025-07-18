@@ -1,93 +1,93 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const CartContext = createContext();
 
 // Dummy data for testing
-const initialCartItems = [
-  {
-    id: 1,
-    name: "Organic Ashwagandha Powder",
-    price: 599,
-    quantity: 2,
-    imageUrl: "https://source.unsplash.com/100x100/?herbs",
-    description: "Pure organic ashwagandha root powder for stress relief and immunity",
-    category: "Ayurvedic"
-  },
-  {
-    id: 2,
-    name: "Herbal Toothpaste",
-    price: 249,
-    quantity: 1,
-    imageUrl: "https://source.unsplash.com/100x100/?toothpaste",
-    description: "Natural herbal toothpaste with neem and clove",
-    category: "Ayurvedic"
-  },
-  {
-    id: 3,
-    name: "Tulsi Green Tea",
-    price: 399,
-    quantity: 3,
-    imageUrl: "https://source.unsplash.com/100x100/?tea",
-    description: "Organic tulsi green tea for immunity and wellness",
-    category: "Ayurvedic"
-  }
-];
+// const initialCartItems = [
+//   {
+//     id: 1,
+//     name: "Organic Ashwagandha Powder",
+//     price: 599,
+//     quantity: 2,
+//     imageUrl: "https://source.unsplash.com/100x100/?herbs",
+//     description: "Pure organic ashwagandha root powder for stress relief and immunity",
+//     category: "Ayurvedic"
+//   },
+//   {
+//     id: 2,
+//     name: "Herbal Toothpaste",
+//     price: 249,
+//     quantity: 1,
+//     imageUrl: "https://source.unsplash.com/100x100/?toothpaste",
+//     description: "Natural herbal toothpaste with neem and clove",
+//     category: "Ayurvedic"
+//   },
+//   {
+//     id: 3,
+//     name: "Tulsi Green Tea",
+//     price: 399,
+//     quantity: 3,
+//     imageUrl: "https://source.unsplash.com/100x100/?tea",
+//     description: "Organic tulsi green tea for immunity and wellness",
+//     category: "Ayurvedic"
+//   }
+// ];
 
 export const useCart = () => useContext(CartContext);
 
 // Sample offers data
-const offers = [
-  {
-    id: 1,
-    code: "SAVE10",
-    discount: 0.1,
-    description: "10% off on all products",
-    validUntil: "2024-12-31",
-    minPurchase: 500,
-    category: "All Products"
-  },
-  {
-    id: 2,
-    code: "WELCOME5",
-    discount: 0.05,
-    description: "5% off on first purchase",
-    validUntil: "2024-12-31",
-    minPurchase: 1000,
-    category: "First Time Users"
-  },
-  {
-    id: 3,
-    code: "AYUR20",
-    discount: 0.2,
-    description: "20% off on Ayurvedic products",
-    validUntil: "2024-12-31",
-    minPurchase: 1500,
-    category: "Ayurvedic Products"
-  },
-  {
-    id: 4,
-    code: "MED15",
-    discount: 0.15,
-    description: "15% off on Medical Equipment",
-    validUntil: "2024-12-31",
-    minPurchase: 2000,
-    category: "Medical Equipment"
-  },
-  {
-    id: 5,
-    code: "MED15",
-    discount: 0.15,
-    description: "15% off on Medical Equipment",
-    validUntil: "2025-12-31",
-    minPurchase: 2000,
-    category: "Medical Equipment"
-  }
-];
+// const offers = [
+//   {
+//     id: 1,
+//     code: "SAVE10",
+//     discount: 0.1,
+//     description: "10% off on all products",
+//     validUntil: "2024-12-31",
+//     minPurchase: 500,
+//     category: "All Products"
+//   },
+//   {
+//     id: 2,
+//     code: "WELCOME5",
+//     discount: 0.05,
+//     description: "5% off on first purchase",
+//     validUntil: "2024-12-31",
+//     minPurchase: 1000,
+//     category: "First Time Users"
+//   },
+//   {
+//     id: 3,
+//     code: "AYUR20",
+//     discount: 0.2,
+//     description: "20% off on Ayurvedic products",
+//     validUntil: "2024-12-31",
+//     minPurchase: 1500,
+//     category: "Ayurvedic Products"
+//   },
+//   {
+//     id: 4,
+//     code: "MED15",
+//     discount: 0.15,
+//     description: "15% off on Medical Equipment",
+//     validUntil: "2024-12-31",
+//     minPurchase: 2000,
+//     category: "Medical Equipment"
+//   },
+//   {
+//     id: 5,
+//     code: "MED15",
+//     discount: 0.15,
+//     description: "15% off on Medical Equipment",
+//     validUntil: "2025-12-31",
+//     minPurchase: 2000,
+//     category: "Medical Equipment"
+//   }
+// ];
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem("cart");
-    return savedCart ? JSON.parse(savedCart) : initialCartItems;
+    return savedCart ? JSON.parse(savedCart) : [];
   });
 
   const [appliedPromo, setAppliedPromo] = useState(() => {
@@ -286,7 +286,7 @@ export const CartProvider = ({ children }) => {
         getDiscount,
         getTotal,
         getTotalItems,
-        offers,
+        // offers,
       }}
     >
       {children}

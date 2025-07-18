@@ -5,7 +5,7 @@ const PrivacyPolicy = () => {
     <div className="min-h-screen px-4 py-10 sm:px-8 lg:px-24">
       {/* Header */}
       <div className=" p-6 sm:p-10 rounded-md text-center mb-10">
-        <h1 className="text-3xl sm:text-4xl font-bold text-blue-600">Privacy Policy</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-green-600">Privacy Policy</h1>
         <p className="mt-2 text-gray-600 text-sm sm:text-base">
           Your privacy is important to us. This policy explains how we handle your data.
         </p>
