@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS reference_book (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    author VARCHAR(100),
+    description TEXT,
+    slug VARCHAR(170) UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+); 

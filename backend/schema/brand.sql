@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS brand (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(120) UNIQUE,
+    logo_url TEXT,
+    banner_url TEXT,
+    is_top_brand BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+); 

@@ -1,0 +1,28 @@
+{
+  "Pincodes": [
+    {
+      "Pincode": "110001",
+      "City": "New Delhi",
+      "District": "New Delhi",
+      "State": "Delhi"
+    },
+    {
+      "Pincode": "110002",
+      "City": "New Delhi",
+      "District": "Central Delhi",
+      "State": "Delhi"
+    },
+    {
+            "Pincode": "110003",
+            "City": "New Delhi",
+            "District": "North Delhi",
+            "State": "Delhi"
+        },
+    {
+      "Pincode": "400001",
+      "City": "Mumbai",
+      "District": "Mumbai",
+      "State": "Maharashtra"
+    }
+  ]
+}

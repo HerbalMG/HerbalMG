@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS inventory (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER REFERENCES product(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL,
+    status VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+); 

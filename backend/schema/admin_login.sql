@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS admin_login (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES "users"(id) ON DELETE CASCADE,
+    session_token TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE
+); 

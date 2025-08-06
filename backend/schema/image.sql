@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS image (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER REFERENCES product(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    alt_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+); 
