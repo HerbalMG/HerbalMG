@@ -18,6 +18,20 @@ export default function InfiniteDoctorList({ doctors, onSelect }) {
     return () => observer.disconnect();
   }, [items, doctors]);
 
+  if (doctors.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+        <div className="text-center">
+          <div className="text-5xl mb-4">👨‍⚕️</div>
+          <h3 className="text-xl font-medium text-gray-600 mb-2">No Doctors Available</h3>
+          <p className="text-gray-500 text-sm max-w-md">
+            We're working on connecting with qualified healthcare professionals. Check back soon for expert consultations!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

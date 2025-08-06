@@ -1,330 +1,465 @@
-import React, { useState } from "react";
-import dummyOrders from "../data/dummyOrders";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
-export default function ProfileForm() {
-  const [user, setUser] = useState({
-    fullName: "John Doe",
-    email: "john@example.com",
-    contact: "9876543210",
-    house_number: "123 Main St",
-    area: "Kurla",
-    landmark: "Apollo Hospital",
-    state: "Maharashtra",
-    city: "Mumbai",
-    pinCode: "400001",
-    country: "India",
-  });
+const API_BASE = "http://localhost:3001/api";
 
-  const [isEditing, setIsEditing] = useState(false);
+export default function ProfileForm() {
+  // Get user info from localStorage
+  const userInfo = JSON.parse(localStorage.getItem('user')) || {};
+  const userId = userInfo.id || 1;
+  const isNewUser = userInfo.isNewUser || false;
+
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
+  
+  // Basic profile state
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    dob: '',
+    gender: ''
+  });
+  const [profileCompleted, setProfileCompleted] = useState(!isNewUser);
+
+  // Fetch user profile and addresses on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch user profile if new user
+        if (isNewUser) {
+          const profileResponse = await fetch(`${API_BASE}/auth/profile/${userId}`, {
+            credentials: 'include',
+          });
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            setProfile({
+              name: profileData.name || '',
+              email: profileData.email || '',
+              mobile: profileData.mobile || '',
+              dob: profileData.dob || '',
+              gender: profileData.gender || ''
+            });
+            setProfileCompleted(profileData.profile_completed || false);
+          }
+        }
+
+        // Fetch addresses
+        const addressResponse = await fetch(`${API_BASE}/customer/${userId}/addresses`, {
+          credentials: 'include',
+        });
+        if (addressResponse.ok) {
+          const addressData = await addressResponse.json();
+          setAddresses(addressData.map(addr => ({ ...addr, isEditing: false, open: false })));
+        }
+      } catch (error) {
+        toast.error("Failed to load profile data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId, isNewUser]);
+
+  // Profile completion functions
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({ ...prev, [name]: value }));
+  };
+
+  const completeProfile = async () => {
+    if (!profile.name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+
+    if (profile.email && !validateEmail(profile.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setProfileLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/auth/complete-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId,
+          name: profile.name,
+          email: profile.email,
+          dob: profile.dob,
+          gender: profile.gender
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to complete profile');
+
+      setProfileCompleted(true);
+      // Update localStorage to reflect profile completion
+      localStorage.setItem('user', JSON.stringify({ ...userInfo, isNewUser: false }));
+      toast.success('Profile completed successfully!');
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone);
   const validatePinCode = (pin) => /^\d{6}$/.test(pin);
 
-  const handleChange = (e) => {
+  const updateAddressState = (index, updates) => {
+    setAddresses(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], ...updates };
+      return updated;
+    });
+  };
+
+  const handleFieldChange = (index, e) => {
     const { name, value } = e.target;
-    setUser((prev) => ({ ...prev, [name]: value }));
+    updateAddressState(index, { [name]: value });
   };
 
-  const handleEdit = () => setIsEditing(true);
-
-  const handleSave = (e) => {
-    e.preventDefault();
-
-    if (!user.fullName || user.fullName.trim().length < 3) {
-      toast.error("Full name must be at least 3 characters.");
-      return;
-    }
-    if (!user.email || !validateEmail(user.email)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-    if (!user.contact || !validatePhone(user.contact)) {
-      toast.error("Please enter a valid 10-digit Indian contact number.");
-      return;
-    }
-    if (!user.house_number || user.house_number.trim().length < 5) {
-      toast.error("House number must be at least 5 characters.");
-      return;
-    }
-    if (!user.area || user.area.trim().length < 2) {
-      toast.error("Area must be at least 2 characters.");
-      return;
-    }
-    if (!user.landmark || user.landmark.trim().length < 2) {
-      toast.error("Landmark must be at least 2 characters.");
-      return;
-    }
-    if (!user.state || user.state.trim().length < 2) {
-      toast.error("State must be at least 2 characters.");
-      return;
-    }
-    if (!user.city || user.city.trim().length < 2) {
-      toast.error("City must be at least 2 characters.");
-      return;
-    }
-    if (!user.pinCode || !validatePinCode(user.pinCode)) {
-      toast.error("Please enter a valid 6-digit pin code.");
-      return;
-    }
-    if (!user.country || user.country.trim().length < 2) {
-      toast.error("Country must be at least 2 characters.");
-      return;
-    }
-
-    setIsEditing(false);
-    toast.success("Profile updated!");
+  const toggleOpen = (index) => {
+    updateAddressState(index, { open: !addresses[index].open });
   };
+
+  const toggleEdit = (index) => {
+    updateAddressState(index, { isEditing: true, open: true });
+  };
+
+  const saveAddress = async (index) => {
+    const addr = addresses[index];
+    // Validation (same as before)
+    if (!addr.fullName?.trim() || addr.fullName.trim().length < 3) {
+      toast.error("Name must be at least 3 characters.");
+      return false;
+    }
+    if (!validateEmail(addr.email)) { toast.error("Invalid email."); return false; }
+    if (!validatePhone(addr.contact)) { toast.error("Invalid mobile number."); return false; }
+    if (!addr.house_number?.trim() || addr.house_number.trim().length < 5) {
+      toast.error("House number too short."); return false;
+    }
+    if (!addr.area?.trim() || addr.area.trim().length < 2) {
+      toast.error("Area too short."); return false;
+    }
+    if (!addr.landmark?.trim() || addr.landmark.trim().length < 2) {
+      toast.error("Landmark too short."); return false;
+    }
+    if (!addr.state?.trim() || addr.state.trim().length < 2) {
+      toast.error("State too short."); return false;
+    }
+    if (!addr.city?.trim() || addr.city.trim().length < 2) {
+      toast.error("City too short."); return false;
+    }
+    if (!validatePinCode(addr.pinCode)) { toast.error("Invalid pin code."); return false; }
+    if (!addr.country?.trim() || addr.country.trim().length < 2) {
+      toast.error("Country too short."); return false;
+    }
+
+    // Prepare payload for backend
+    const payload = {
+      address_line1: `${addr.house_number}, ${addr.area}, ${addr.landmark}`,
+      address_line2: '',
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pinCode,
+      country: addr.country,
+      is_default: addr.is_default || false,
+    };
+
+    try {
+      let response, data;
+      if (addr.id) {
+        // Update
+        response = await fetch(`${API_BASE}/customer/${userId}/addresses/${addr.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload),
+        });
+        data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Update failed');
+        updateAddressState(index, { ...data, isEditing: false });
+        toast.success("Address updated!");
+      } else {
+        // Create
+        response = await fetch(`${API_BASE}/customer/${userId}/addresses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload),
+        });
+        data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Add failed');
+        setAddresses(prev => prev.map((a, i) => i === index ? { ...data, isEditing: false, open: true } : a));
+        toast.success("Address added!");
+      }
+      return true;
+    } catch (err) {
+      toast.error(err.message);
+      return false;
+    }
+  };
+
+  const handleRemove = async (index) => {
+    const addr = addresses[index];
+    if (!addr.id) {
+      setAddresses(prev => prev.filter((_, i) => i !== index));
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE}/customer/${userId}/addresses/${addr.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Delete failed');
+      setAddresses(prev => prev.filter((_, i) => i !== index));
+      toast.success("Address removed");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleAdd = () => {
+    setAddresses(prev => [
+      ...prev,
+      {
+        fullName: '',
+        email: '',
+        contact: '',
+        house_number: '',
+        area: '',
+        landmark: '',
+        state: '',
+        city: '',
+        pinCode: '',
+        country: '',
+        isEditing: true,
+        open: true,
+      },
+    ]);
+  };
+
+  const setDefault = async (index) => {
+    const addr = addresses[index];
+    if (!addr.id) return toast.error('Save address first!');
+    try {
+      const response = await fetch(`${API_BASE}/customer/${userId}/addresses/${addr.id}/set-default`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to set default');
+      setAddresses(prev => prev.map((a, i) => ({ ...a, is_default: i === index })));
+      toast.success('Default address set!');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const inputFields = [
+    { label: "Name", name: "fullName", type: "text" },
+    { label: "Email", name: "email", type: "email" },
+    { label: "Mobile", name: "contact", type: "tel", maxLength: 10 },
+    { label: "House No.", name: "house_number", type: "text" },
+    { label: "Area", name: "area", type: "text" },
+    { label: "Landmark", name: "landmark", type: "text" },
+    { label: "State", name: "state", type: "text" },
+    { label: "City", name: "city", type: "text" },
+    { label: "Pin Code", name: "pinCode", type: "text", maxLength: 6 },
+    { label: "Country", name: "country", type: "text" },
+  ];
+
+  if (loading) return <div className="p-8 text-center">Loading profile...</div>;
 
   return (
-    <div className="min-h-screen  py-10 px-4">
-      <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 py-6 bg-white shadow-md rounded-md">
-        <h2 className="text-2xl font-semibold mb-6">User Profile</h2>
-        <form onSubmit={handleSave} noValidate>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Full Name */}
-            <div className="col-span-1 md:col-span-2">
-              <label htmlFor="fullName" className="block text-gray-700 mb-1 font-medium">
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                value={user.fullName}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
+    <div className="min-h-screen sm:p-6 ">
+      <div className="max-w-3xl mx-auto bg-white p-6 rounded-md shadow-lg">
+        <h2 className="text-2xl font-semibold mb-4">User Profile</h2>
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-gray-700 mb-1 font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={user.email}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
+        {/* Profile Completion Section for New Users */}
+        {!profileCompleted && (
+          <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-blue-800">Complete Your Profile</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Full Name *
+                </label>
+                <input
+                  name="name"
+                  type="text"
+                  value={profile.name}
+                  onChange={handleProfileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Email (Optional)
+                </label>
+                <input
+                  name="email"
+                  type="email"
+                  value={profile.email}
+                  onChange={handleProfileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Date of Birth (Optional)
+                </label>
+                <input
+                  name="dob"
+                  type="date"
+                  value={profile.dob}
+                  onChange={handleProfileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Gender (Optional)
+                </label>
+                <select
+                  name="gender"
+                  value={profile.gender}
+                  onChange={handleProfileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
-
-            {/* Contact Number */}
-            <div>
-              <label htmlFor="contact" className="block text-gray-700 mb-1 font-medium">
-                Phone Number
-              </label>
-              <input
-                id="contact"
-                name="contact"
-                type="tel"
-                value={user.contact}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                maxLength={10}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
-
-            {/* House Number */}
-            <div>
-              <label htmlFor="house_number" className="block text-gray-700 mb-1 font-medium">
-                House Number
-              </label>
-              <input
-                id="house_number"
-                name="house_number"
-                type="text"
-                value={user.house_number}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
-
-            {/* Area */}
-            <div>
-              <label htmlFor="area" className="block text-gray-700 mb-1 font-medium">
-                Area
-              </label>
-              <input
-                id="area"
-                name="area"
-                type="text"
-                value={user.area}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
-
-            {/* Landmark */}
-            <div>
-              <label htmlFor="landmark" className="block text-gray-700 mb-1 font-medium">
-                Landmark
-              </label>
-              <input
-                id="landmark"
-                name="landmark"
-                type="text"
-                value={user.landmark}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
-
-            {/* State */}
-            <div>
-              <label htmlFor="state" className="block text-gray-700 mb-1 font-medium">
-                State
-              </label>
-              <input
-                id="state"
-                name="state"
-                type="text"
-                value={user.state}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
-
-            {/* City */}
-            <div>
-              <label htmlFor="city" className="block text-gray-700 mb-1 font-medium">
-                City
-              </label>
-              <input
-                id="city"
-                name="city"
-                type="text"
-                value={user.city}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
-
-            {/* Pin Code */}
-            <div>
-              <label htmlFor="pinCode" className="block text-gray-700 mb-1 font-medium">
-                Pin Code
-              </label>
-              <input
-                id="pinCode"
-                name="pinCode"
-                type="text"
-                value={user.pinCode}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                maxLength={6}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
-
-            {/* Country */}
-            <div>
-              <label htmlFor="country" className="block text-gray-700 mb-1 font-medium">
-                Country
-              </label>
-              <input
-                id="country"
-                name="country"
-                type="text"
-                value={user.country}
-                onChange={handleChange}
-                readOnly={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  isEditing ? "border-blue-500 focus:ring-blue-300" : "border-gray-300"
-                }`}
-                required
-              />
-            </div>
+            <button
+              onClick={completeProfile}
+              disabled={profileLoading || !profile.name.trim()}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                profileLoading || !profile.name.trim()
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              {profileLoading ? 'Completing...' : 'Complete Profile'}
+            </button>
           </div>
+        )}
 
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
-            {!isEditing && (
-              <button
-                type="button"
-                onClick={handleEdit}
-                className="bg-orange-600 text-white px-5 py-2 rounded hover:bg-orange-700"
-              >
-                Edit
-              </button>
-            )}
-            {isEditing && (
-              <button
-                type="submit"
-                className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700"
-              >
-                Save
-              </button>
+        {/* Address Management Section */}
+        <div className={!profileCompleted ? 'opacity-50 pointer-events-none' : ''}>
+          <h3 className="text-lg font-semibold mb-4">Manage Addresses</h3>
+
+        {addresses.map((addr, idx) => (
+          <div
+            key={addr.id || idx}
+            className={`mb-4 border rounded-md overflow-hidden ${addr.is_default ? 'border-blue-500' : ''}`}
+          >
+            {/* Accordion Header */}
+            <div
+              className="flex justify-between items-center bg-gray-100 p-3 cursor-pointer"
+              onClick={() => toggleOpen(idx)}
+            >
+              <h3 className="font-medium">
+                Address {idx + 1}: {addr.fullName || "(no name)"} {addr.is_default && <span className="text-blue-600 text-xs ml-2">[Default]</span>}
+              </h3>
+              <span>{addr.open ? "▲" : "▼"}</span>
+            </div>
+
+            {/* Panel */}
+            {addr.open && (
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {inputFields.map(({ label, name, type, maxLength }) => (
+                    <div key={name}>
+                      <label className="block mb-1 font-medium text-gray-700">
+                        {label}
+                      </label>
+                      <input
+                        name={name}
+                        type={type}
+                        maxLength={maxLength}
+                        value={addr[name] || ''}
+                        onChange={(e) => handleFieldChange(idx, e)}
+                        readOnly={!addr.isEditing}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                          addr.isEditing
+                            ? "border-blue-500 focus:ring-blue-300"
+                            : "border-gray-300 bg-gray-100"
+                        }`}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-3 justify-end">
+                  {addr.isEditing ? (
+                    <button
+                      type="button"
+                      onClick={() => saveAddress(idx)}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    >
+                      Save
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => toggleEdit(idx)}
+                      className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {addresses.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(idx)}
+                      className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {!addr.is_default && !addr.isEditing && addr.id && (
+                    <button
+                      type="button"
+                      onClick={() => setDefault(idx)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    >
+                      Set as Default
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
-        </form>
+        ))}
 
-        {/* Order History */}
-        <div className="mt-10">
-          <h3 className="text-xl font-semibold mb-4">Order History</h3>
-          <div className="overflow-x-auto w-full">
-            <table className="min-w-full text-left border">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="px-4 py-2 border">Name</th>
-                  <th className="px-4 py-2 border">Quantity</th>
-                  <th className="px-4 py-2 border">Price</th>
-                  <th className="px-4 py-2 border">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dummyOrders.map((order) => (
-                  <tr key={order.id} className="border-t">
-                    <td className="px-4 py-2 border">{order.name}</td>
-                    <td className="px-4 py-2 border">{order.quantity}</td>
-                    <td className="px-4 py-2 border">{order.price}</td>
-                    <td className="px-4 py-2 border">{order.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              disabled={!profileCompleted}
+            >
+              + Add Address
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
 }
+

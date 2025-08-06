@@ -3,85 +3,22 @@ import { useParams } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import toast, { Toaster } from "react-hot-toast";
 import Style from "../components/Style";
-import Trending from "../components/Trending";
+import { generateProductBreadcrumbs, generateProductUrl } from "../utils/productUtils";
+import Breadcrumb from "../components/Breadcrumb";
 
-import badges from '../assets/badges.svg';
-import brands from '../assets/brands.svg';
-import order from '../assets/order.svg';
-import products from '../assets/products.svg';
+import badges from '/assets/badges.svg';
+import brands from '/assets/brands.svg';
+import order from '/assets/order.svg';
+import products from '/assets/products.svg';
 import { ProductCardScrollable } from "../components/ProductCard";
-
-
-const productSimilar = [
-  {
-    id: 1,
-    name: 'Stylish Shoes',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 99.99,
-    sellingPrice: 59.99
-  },
-  {
-    id: 2,
-    name: 'Casual Jacket',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 120.00,
-    sellingPrice: 85.00
-  },
-  {
-    id: 3,
-    name: 'Wrist Watch',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 250.00,
-    sellingPrice: 180.00
-  },
-  {
-    id: 4,
-    name: 'Sunglasses',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 70.00,
-    sellingPrice: 45.00
-  },
-  {
-    id: 5,
-    name: 'Sunglasses',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 70.00,
-    sellingPrice: 45.00
-  },
-  {
-    id: 6,
-    name: 'Sunglasses',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 70.00,
-    sellingPrice: 45.00
-  },
-  {
-    id: 7,
-    name: 'Sunglasses',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 70.00,
-    sellingPrice: 45.00
-  },
-  {
-    id: 8,
-    name: 'Sunglasses',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 70.00,
-    sellingPrice: 45.00
-  },
-  {
-    id: 9,
-    name: 'Sunglasses',
-    image: 'https://via.placeholder.com/200',
-    actualPrice: 70.00,
-    sellingPrice: 45.00
-  }
-];  
-
+import { Link } from "react-router-dom";
+import img from '/assets/7694844.jpg'
 
 
 export default function ProductDetails() {
-  const { id } = useParams();
+  const { slug, productSlug } = useParams();
+  // Use productSlug if available (from hierarchical routes), otherwise use slug
+  const productIdentifier = productSlug || slug;
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -94,6 +31,11 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [prescriptionError, setPrescriptionError] = useState("");
+  const [peoplePreferredProducts, setPeoplePreferredProducts] = useState([]);
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const [brandName, setBrandName] = useState("");
+
+  
 
   const scrollRef = useRef(null);
 
@@ -119,7 +61,7 @@ export default function ProductDetails() {
 
 
   const icons = [
-  { img: badges, title: 'Genuine & Authentic Product' },
+  { img: badges, title: 'Genuine & Authentic ' },
   { img: brands, title: '100+ Top Brands' },
   { img: order, title: 'Fast & Safe Delivery' },
   { img: products, title: '1000+ Products' },
@@ -127,33 +69,121 @@ export default function ProductDetails() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:3001/api/product/${id}`)
+    fetch(`http://localhost:3001/api/product/${productIdentifier}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch product");
         return res.json();
       })
       .then((data) => {
+        // console.log('Product data:', data);
+        // console.log('Dietary info:', data.dietary);
+        // console.log('Medicine type:', data.medicine_type);
         setProduct(data);
         setSelectedImage(
           (Array.isArray(data.images) ? data.images[0] : null) || null
         );
-        // Fetch prices
-        fetch(`http://localhost:3001/api/product_price`)
+
+    // After setProduct(data);
+fetch(`http://localhost:3001/api/product?category=${encodeURIComponent(data.category)}&exclude_id=${data.id}`)
+  .then((res) => res.json())
+  .then((similarData) => {
+    if (Array.isArray(similarData)) {
+      setSimilarProducts(similarData.slice(0, 10)); // limit results
+    } else {
+      setSimilarProducts([]);
+    }
+  })
+  .catch((err) => {
+    // console.error("Failed to fetch similar products", err);
+    setSimilarProducts([]);
+  });
+
+
+        // Fetch brand name if brand_id exists
+        if (data.brand_id) {
+          fetch(`http://localhost:3001/api/brand/${data.brand_id}`)
+            .then((res) => res.json())
+            .then((brandData) => {
+              setBrandName(brandData.name || "");
+            })
+            .catch((err) => {
+              console.error("Failed to fetch brand:", err);
+              setBrandName("");
+            });
+        }
+
+        // Fetch people preferred products
+        fetch("http://localhost:3001/api/product?people_preferred=true")
           .then((res) => res.json())
-          .then((prices) => {
-            const productPrices = prices.filter(
-              (p) => String(p.product_id) === String(data.id)
-            );
-            setPriceMap(productPrices);
-            if (productPrices.length > 0) {
-              setSelectedSize(productPrices[0].size);
+          .then((data) => {
+            if (Array.isArray(data)) {
+              setPeoplePreferredProducts(data);
             } else {
-              setSelectedSize(null);
+              setPeoplePreferredProducts([]);
+              console.error("API error (people preferred):", data.error || data);
             }
           })
-          .catch(() => {
-            setPriceMap([]);
-            setSelectedSize(null);
+          .catch((err) => {
+            setPeoplePreferredProducts([]);
+            console.error("Network error (people preferred):", err);
+          });
+
+
+        // Fetch prices for this specific product
+        fetch(`http://localhost:3001/api/product_price/product/${data.id}`)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}`);
+            }
+            return res.json();
+          })
+          .then((productPrices) => {
+            console.log('Product prices fetched:', productPrices);
+            const pricesArray = Array.isArray(productPrices) ? productPrices : [];
+            setPriceMap(pricesArray);
+            
+            if (pricesArray.length > 0) {
+              setSelectedSize(pricesArray[0].size);
+            } else {
+              // Fallback: create a default size from main product data
+              console.log('No separate prices found, using main product data');
+              const defaultSize = data.total_quantity || 
+                                 (data.medicine_type === 'Tablet' ? '10' :
+                                  data.medicine_type === 'Capsule' ? '30' :
+                                  data.medicine_type === 'Liquid' ? '100' :
+                                  data.medicine_type === 'Gram' ? '50' : '1');
+              
+              const fallbackPrice = {
+                size: defaultSize,
+                actual_price: data.actual_price,
+                selling_price: data.selling_price,
+                discount_percent: data.discount_percent,
+                quantity: data.total_quantity
+              };
+              setPriceMap([fallbackPrice]);
+              setSelectedSize(fallbackPrice.size);
+            }
+          })
+          .catch((err) => {
+            console.error('Failed to fetch product prices:', err);
+            console.log('Using fallback pricing from main product');
+            
+            // Fallback: use main product pricing
+            const defaultSize = data.total_quantity || 
+                               (data.medicine_type === 'Tablet' ? '10' :
+                                data.medicine_type === 'Capsule' ? '30' :
+                                data.medicine_type === 'Liquid' ? '100' :
+                                data.medicine_type === 'Gram' ? '50' : '1');
+            
+            const fallbackPrice = {
+              size: defaultSize,
+              actual_price: data.actual_price,
+              selling_price: data.selling_price,
+              discount_percent: data.discount_percent,
+              quantity: data.total_quantity
+            };
+            setPriceMap([fallbackPrice]);
+            setSelectedSize(fallbackPrice.size);
           });
         setLoading(false);
       })
@@ -161,7 +191,7 @@ export default function ProductDetails() {
         setError(err.message);
         setLoading(false);
       });
-  }, [id]);
+  }, [productIdentifier]);
 
   if (loading)
     return <div className="p-10 text-center">Loading product...</div>;
@@ -174,6 +204,9 @@ export default function ProductDetails() {
 
   // Sizes/units come from priceMap
   const sizes = priceMap.map((p) => p.size).filter(Boolean);
+  console.log('PriceMap:', priceMap);
+  console.log('Sizes array:', sizes);
+  console.log('Selected size:', selectedSize);
 
   const selectedPrice = priceMap.find((p) => p.size === selectedSize);
   const actualPrice = Number(
@@ -189,7 +222,7 @@ export default function ProductDetails() {
 
   const handleCheckDelivery = () => {
     if (pincode.trim().length >= 5) {
-      setDeliveryMessage("✅ Delivered within 5-7 days.");
+      setDeliveryMessage("✅ Delivered within 3-5 days.");
     } else {
       setDeliveryMessage("❌ Enter a valid pincode.");
     }
@@ -247,10 +280,13 @@ export default function ProductDetails() {
 
   const { addToCart } = useCart();
 
+  const breadcrumbItems = generateProductBreadcrumbs(product);
+
   return (
     <>
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className=" max-w-6xl mx-auto">
       <Toaster position="top-right" />
+      <Breadcrumb items={breadcrumbItems} />
       {/* Responsive Images Section */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Mobile view: main image + thumbnails below */}
@@ -265,7 +301,7 @@ export default function ProductDetails() {
               className="w-full h-[300px] object-contain rounded"
             />
           </div>
-          <div className="flex overflow-x-auto gap-4">
+          {/* <div className="flex overflow-x-auto gap-4">
             {(Array.isArray(product.images) ? product.images : []).map(
               (img, i) => (
                 <img
@@ -281,7 +317,7 @@ export default function ProductDetails() {
                 />
               )
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* Desktop view: thumbnails left, main image right */}
@@ -303,27 +339,32 @@ export default function ProductDetails() {
               )
             )}
           </div>
-          <div className="flex-1 flex items-center justify-center">
+          <div className=" flex-1 flex items-center justify-center">
             <img
               src={
                 selectedImage ||
                 "https://via.placeholder.com/300x200?text=No+Image"
               }
               alt="Main product"
-              className="w-full h-[400px] object-contain rounded"
+              className="w-[400px] h-[400px] object-contain rounded"
             />
           </div>
         </div>
 
         {/* Product Info */}
-        <div className="w-full md:w-1/3 space-y-4">
-          <h1 className="text-3xl font-semibold">{product.name}</h1>
+        <div className="w-full md:w-1/2 space-y-4">
+          <h1 className="text-lg sm:text-l md:text-xl font-semibold">
+            {product.name}
+            {product.strength && (
+              <span className="text-gray-600 font-normal ml-2">({product.strength})</span>
+            )}
+          </h1>
 
           {/* Key Tags */}
           {product.key &&
             Array.isArray(product.key) &&
             product.key.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2">
                 {product.key.map((tag, i) => (
                   <span
                     key={i}
@@ -337,7 +378,7 @@ export default function ProductDetails() {
           {product.key &&
             typeof product.key === "string" &&
             product.key.trim() && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2">
                 {product.key.split(",").map((tag, i) => (
                   <span
                     key={i}
@@ -349,33 +390,63 @@ export default function ProductDetails() {
               </div>
             )}
 
-          {/* Reference Books */}
-          {renderReferenceBooks()}
+         
+
+          {/* Debug Info */}
+          {/* <div className="mb-4 p-3 bg-gray-100 border rounded text-sm">
+            <p><strong>Debug Info:</strong></p>
+            <p>PriceMap length: {priceMap.length}</p>
+            <p>Sizes: {JSON.stringify(sizes)}</p>
+            <p>Selected size: {selectedSize}</p>
+            <p>Medicine type: {product.medicine_type}</p>
+          </div> */}
 
           {/* Size Selector */}
-          {sizes.length > 0 && (
+          {sizes.length > 0 ? (
             <div>
               <h2 className="font-medium mb-2">Select Size:</h2>
               <div className="flex gap-2">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-1 border rounded ${
-                      selectedSize === size
-                        ? "bg-blue-500 text-white"
-                        : "border-gray-400"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+                {sizes.map((size) => {
+                  // Get the medicine type suffix
+                  const getTypeSuffix = (medicineType) => {
+                    switch(medicineType?.toLowerCase()) {
+                      case 'tablet': return 'tablets';
+                      case 'capsule': return 'capsules';
+                      case 'liquid': return 'ml';
+                      case 'gram': return 'g';
+                      default: return medicineType || '';
+                    }
+                  };
+                  
+                  const typeSuffix = getTypeSuffix(product.medicine_type);
+                  const displaySize = `${size} ${typeSuffix}`;
+                  
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-2 py-1 border rounded ${
+                        selectedSize === size
+                          ? "bg-blue-500 text-white"
+                          : "border-gray-400"
+                      }`}
+                    >
+                      {displaySize}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
+          )
+          : (
+            <div className="mb-4 p-2 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+              No sizes available. PriceMap: {JSON.stringify(priceMap)}
+            </div>
+          )
+          }
 
           {/* Quantity Selector */}
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-2 ">
             <span className="font-medium">Quantity:</span>
             <button
               className="px-2 py-1 border rounded text-lg"
@@ -395,57 +466,58 @@ export default function ProductDetails() {
           </div>
 
           {/* Prescription Required */}
-          {product.prescription_required && (
-            <div className="mt-4">
-              <div className="text-red-600 font-medium mb-2">
-                * Prescription required for this product
-              </div>
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={handlePrescriptionChange}
-                className="block mb-2 p-1"
-              />
-              {prescriptionFile && (
-                <div className="mb-2 flex items-center gap-3">
-                  {/* Preview if image */}
-                  {prescriptionFile.type.startsWith("image/") && (
-                    <img
-                      src={URL.createObjectURL(prescriptionFile)}
-                      alt="Prescription Preview"
-                      className="w-20 h-20 object-contain border rounded shadow"
-                    />
-                  )}
-                  <div className="flex flex-col">
-                    <span className="text-green-700 text-sm">
-                      {prescriptionFile.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleRemovePrescription}
-                      className="text-red-600 text-xs underline mt-1 self-start hover:text-red-800"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              )}
-              {prescriptionError && (
-                <div className="text-red-600 text-sm mb-1">
-                  {prescriptionError}
-                </div>
-              )}
-            </div>
-          )}
+{product.prescription_required && (
+  <div className="mt-2 border p-2 rounded bg-gray-50">
+    <label className="block font-medium text-red-600 mb-2">
+      * Prescription required
+    </label>
+    <input
+      type="file"
+      accept="image/*,application/pdf"
+      onChange={handlePrescriptionChange}
+      className="block w-full text-sm text-gray-700 border rounded p-2 mb-2 bg-white"
+    />
+    {prescriptionFile && (
+      <div className="flex items-center gap-2 mt-2">
+        {/* Preview */}
+        {prescriptionFile.type.startsWith("image/") ? (
+          <img
+            src={URL.createObjectURL(prescriptionFile)}
+            alt="Preview"
+            className="w-18 h-18 object-contain border rounded shadow"
+          />
+        ) : (
+          <div className="w-20 h-20 border rounded flex items-center justify-center text-gray-500 bg-white shadow">
+            📄 PDF
+          </div>
+        )}
+        <div>
+          <p className="text-green-700 text-sm">{prescriptionFile.name}</p>
+          <button
+            type="button"
+            onClick={handleRemovePrescription}
+            className="text-red-600 text-xs underline mt-1 hover:text-red-800"
+          >
+            Remove file
+          </button>
+        </div>
+      </div>
+    )}
+    {prescriptionError && (
+      <div className="text-red-600 text-sm mt-2">{prescriptionError}</div>
+    )}
+  </div>
+)}
+
 
           {/* Pricing */}
-          <div className="space-y-1 mt-2">
+          <div className="space-y-1">
             <div className="flex items-center gap-3 text-lg font-semibold text-green-600">
               ₹{sellingPrice.toFixed(2)}
               {hasDiscount && (
                 <>
                   <span className="line-through text-gray-500 text-sm">
-                    MRP: ₹{actualPrice.toFixed(2)}
+                     ₹{actualPrice.toFixed(2)}
                   </span>
                   <span className="text-red-700 text-sm">
                     Save: {discount}%
@@ -453,35 +525,98 @@ export default function ProductDetails() {
                 </>
               )}
             </div>
-            <div className="text-sm text-gray-600">Inclusive of all taxes</div>
+            <div className="text-sm text-gray-500">Inclusive of all taxes</div>
+
+             <button
+            className="bg-green-600 text-white w-full mt-2 py-2 rounded disabled:opacity-60 cursor-pointer" 
+            disabled={
+              (product.prescription_required && !prescriptionFile) ||
+              !selectedSize
+            }
+            onClick={() => {
+              if (product.prescription_required && !prescriptionFile) {
+                setPrescriptionError("Please upload prescription to proceed.");
+                return;
+              }
+              // addToCart({
+              //   id: product.id,
+              //   name: product.name,
+              //   size: selectedSize,
+              //   price: sellingPrice,
+              //   quantity,
+              //   prescriptionFile,
+              //   image: selectedImage,
+              // });
+              addToCart({
+  id: product.id,
+  name: product.name,
+  size: selectedSize,
+  price: sellingPrice,
+  quantity,
+  image: selectedImage,
+});
+
+// Store prescription file in sessionStorage
+if (prescriptionFile) {
+  sessionStorage.setItem(
+    `prescription_${product.id}`,
+    JSON.stringify({
+      name: prescriptionFile.name,
+      type: prescriptionFile.type,
+    })
+  );
+
+  // Optionally store the actual File object using a workaround:
+  window.__prescriptions__ = window.__prescriptions__ || {};
+  window.__prescriptions__[product.id] = prescriptionFile;
+}
+
+              toast.success("Product added to cart");
+            }}
+          >
+            Add to Cart
+          </button>
             {/* Product Notes */}
-            <div className="text-xs text-gray-600 mt-4 space-y-1">
-              <p>
+            <div className="text-xs text-gray-400 mt-2 space-y-1">
+              {/* <p>
                 * 10 Capsules per products.
-              </p>
+              </p> */}
               <p>
-                * Company
+                 Company: {brandName || product.brand_name || "N/A"}
               </p>
-              <p>* Country of Origin: India</p>
-              <p>* Delivery charges will be applied at checkout.</p>
+              <p>* For safety & hygiene reasons, this product can't be returned, we ensure 100% genuine & quality check delivery.</p>
+              <p>* Country of Origin: <span className="font-bold">India</span></p>
+              <p>* To be taken under Medical Supervision. </p>
+              <p>* Delivery charges may be applied on checkout.</p>
             </div>
           </div>
 
               
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-      {icons.map((item, index) => (
-        <div key={index} className="flex flex-col items-center w-24">
-          <img src={item.img} alt={item.title} className="w-12 h-12 mb-2" />
-          <h3 className="text-sm font-medium text-gray-800">{item.title}</h3>
-        </div>
-      ))}
+    {/* <div className="flex overflow-x-auto sm:grid sm:grid-cols-4 gap-2 text-center">
+  {icons.map((item, index) => (
+    <div
+      key={index}
+      className="flex-shrink-0 flex flex-col items-center w-16 sm:w-24"
+    >
+      <img
+        src={item.img}
+        alt={item.title}
+        className="w-10 h-10 sm:w-12 sm:h-12 mb-1 sm:mb-2"
+      />
+      <h3 className="text-xs sm:text-sm text-gray-800">
+        {item.title}
+      </h3>
     </div>
+  ))}
+</div> */}
+
+
  
 
 
 
           {/* Delivery Check */}
-          <div className="flex gap-2 mt-4">
+          {/* <div className="flex gap-2 mt-4">
             <input
               type="text"
               value={pincode}
@@ -498,10 +633,10 @@ export default function ProductDetails() {
           </div>
           {deliveryMessage && (
             <div className="text-sm mt-1 text-gray-700">{deliveryMessage}</div>
-          )}
+          )} */}
 
           {/* Add to Cart Button */}
-          <button
+          {/* <button
             className="bg-green-600 text-white w-full mt-4 py-2 rounded disabled:opacity-60 cursor-pointer"
             disabled={
               (product.prescription_required && !prescriptionFile) ||
@@ -513,21 +648,50 @@ export default function ProductDetails() {
                 return;
               }
               addToCart({
-                id: product.id,
-                name: product.name,
-                size: selectedSize,
-                price: sellingPrice,
-                quantity,
-                prescriptionFile,
-                image: selectedImage,
-              });
+  id: product.id,
+  name: product.name,
+  size: selectedSize,
+  price: sellingPrice,
+  quantity,
+  image: selectedImage,
+});
+
+// Store prescription file in sessionStorage
+if (prescriptionFile) {
+  sessionStorage.setItem(
+    `prescription_${product.id}`,
+    JSON.stringify({
+      name: prescriptionFile.name,
+      type: prescriptionFile.type,
+    })
+  );
+
+  // Optionally store the actual File object using a workaround:
+  window.__prescriptions__ = window.__prescriptions__ || {};
+  window.__prescriptions__[product.id] = prescriptionFile;
+}
+
               toast.success("Product added to cart");
             }}
           >
             Add to Cart
-          </button>
+          </button> */}
+
+          <div
+      className="relative w-[50vh] h-[20vh] md:h-[20vh] mt-2 rounded-2xl overflow-hidden"
+      role="banner"
+    >
+      <img
+        src={img}
+        alt="Banner"
+        className=" object-cover"
+      />
+    </div>
         </div>
       </div>
+
+       {/* Reference Books */}
+          {renderReferenceBooks()}
 
       {/* Tabs Section */}
       <div className="mt-5 border-t pt-4">
@@ -535,11 +699,9 @@ export default function ProductDetails() {
         <div className="hidden md:flex gap-4 border-b pb-2">
           {[
             { key: "description", label: "description" },
-            // { key: "key_benefits", label: "key benefits" },
             { key: "key_ingredients", label: "key ingredients" },
-            { key: "how_to_use", label: "Dosage" },
-            { key: "safety_precaution", label: "dietary & lifestyle advice" },
-            // { key: "other_info", label: "other information" },
+            { key: "dosage", label: "Dosage" },
+            { key: "dietary", label: "dietary & lifestyle advice" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -560,71 +722,129 @@ export default function ProductDetails() {
           {activeTab === "description" && (
             <p>{product.description || "No description available."}</p>
           )}
-          {activeTab === "key_benefits" && (
-            <p>{product.key_benefits || "No key benefits provided."}</p>
+          {activeTab === "dosage" && (
+            <p>{product.dosage || "Usage information not available."}</p>
           )}
-          {activeTab === "how_to_use" && (
-            <p>{product.how_to_use || "Usage information not available."}</p>
-          )}
-          {activeTab === "safety_precaution" && (
+          {activeTab === "dietary" && (
             <p>
-              {product.safety_precaution || "No safety or precaution info."}
+              {product.dietary || "No safety or precaution info."}
             </p>
           )}
           {activeTab === "key_ingredients" && (
             <p>{product.key_ingredients || "No ingredients found."}</p>
           )}
-          {activeTab === "other_info" && (
-            <p>{product.other_info || "No additional information."}</p>
-          )}
         </div>
 
         {/* Mobile Accordion Tabs */}
-        <div className="block md:hidden mt-4 space-y-6 text-gray-800 leading-relaxed whitespace-pre-line">
+        <div className="block md:hidden space-y-1 text-gray-800">
           {[
             { label: "Description", content: product.description },
             { label: "Key Ingredients", content: product.key_ingredients },
-            // { label: "Key Benefits", content: product.key_benefits },
-            { label: "Dosage", content: product.how_to_use },
+            { label: "Dosage", content: product.dosage },
             {
               label: "Dietary & Lifestyle Advice",
-              content: product.safety_precaution,
+              content: product.dietary,
             },
-            // { label: "Other Information", content: product.other_info },
           ].map((section) => (
-            <div key={section.label} className="border-b pb-4">
-              <h2 className="text-lg font-semibold mb-1">{section.label}</h2>
-              <p>{section.content || "Not available."}</p>
+            <div key={section.label} className="">
+              <h2 className="text-sm font-semibold text-gray-800">{section.label}</h2>
+              <p className="text-gray-500 text-sm"> {section.content || "Not available."}</p>
             </div>
           ))}
         </div>
       </div>
     </div>
 
-    {/* <Trending/> */}
-
     {/* ----------  */}
-            <div className="">
-          <h1 className="text-2xl font-bold mb-4">Similar Products</h1>
-          <div className="flex overflow-x-auto gap-4">
-            {productSimilar.map((product) => (
-              <ProductCardScrollable key={product.id} {...product} />
-            ))}
-          </div>
-        </div>
+           {similarProducts.length > 0 && (
+  <div className="mt-10 sm:px-6">
+    <div className="flex justify-between items-center mb-4 gap-2">
+      <h1 className="text-lg sm:text-xl md:text-2xl font-semibold">Similar Products</h1>
+      <Link
+        to={`/products?category=${encodeURIComponent(product.category)}`}
+        className=" text-blue-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg  transition-colors text-s sm:text-sm font-medium whitespace-nowrap"
+      >
+        View All
+      </Link>
+    </div>
+    <div 
+      className="flex overflow-x-auto gap-3 sm:gap-4 scrollbar-hide px-1"
+      style={{
+        scrollbarWidth: 'none', /* Firefox */
+        msOverflowStyle: 'none', /* Internet Explorer 10+ */
+      }}
+    >
+      <style jsx>{`
+        div::-webkit-scrollbar {
+          display: none; /* Safari and Chrome */
+        }
+      `}</style>
+      {similarProducts.map((item) => (
+        <Link to={generateProductUrl(item)} key={item.id}>
+          <ProductCardScrollable
+            id={item.id}
+            name={item.name}
+            image={
+              Array.isArray(item.images) && item.images.length > 0
+                ? item.images[0]
+                : "https://via.placeholder.com/200"
+            }
+            actualPrice={item.actual_price}
+            sellingPrice={item.selling_price}
+          />
+        </Link>
+      ))}
+    </div>
+  </div>
+)}
+
         {/* ---------------  */}
 
         {/* ----------  */}
-            <div className="mt-2">
-          <h1 className="text-2xl font-bold mb-4">People also Preferred this Product</h1>
-          <div className="flex overflow-x-auto gap-4">
-            {productSimilar.map((product) => (
-              <ProductCardScrollable key={product.id} {...product} />
-            ))}
-          </div>
+            <div className="mt-8 sm:px-6">
+        <div className="flex justify-between items-center mb-4 gap-2">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-black">People Preferred Products</h1>
+          <Link
+            to="/products?people_preferred=true"
+            className=" text-blue-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg  transition-colors text-s sm:text-sm font-medium whitespace-nowrap"
+          >
+            View All
+          </Link>
         </div>
+        <div 
+          className="flex overflow-x-auto gap-3 sm:gap-4 scrollbar-hide px-1"
+          style={{
+            scrollbarWidth: 'none', /* Firefox */
+            msOverflowStyle: 'none', /* Internet Explorer 10+ */
+          }}
+        >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              display: none; /* Safari and Chrome */
+            }
+          `}</style>
+          {peoplePreferredProducts.map((product) => (
+            <Link
+        key={product.id}
+        to={generateProductUrl(product)}
+        style={{ textDecoration: 'none' }} 
+      >
+            <ProductCardScrollable
+              key={product.id}
+              id={product.id}
+              image={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : undefined}
+              name={product.name}
+              actualPrice={product.actual_price}
+              sellingPrice={product.selling_price}
+              emptyStateIcon="👥"
+        emptyStateTitle="No People Preferred Products Available"
+        emptyStateMessage="We're gathering customer favorites. Check back soon for popular choices!"
+            />
+            </Link>
+          ))}
+        </div>
+      </div>
         {/* ---------------  */}
-    {/* <Trending/> */}
 
     <Style/>  
 

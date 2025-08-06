@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { createOrder } from '../services/orderService';
+import { createOrGetCustomer } from '../services/customerService';
 
 // GST rates for different categories
 const GST_RATES = {
@@ -11,11 +13,40 @@ const GST_RATES = {
   'Homeopathic': 0.12       // 12% for Homeopathic
 };
 
-const SHIPPING_COST = 49;
+function getShippingCost(total) {
+  if (total < 499) {
+    return 79;
+  } else if (total >= 499 && total <= 999) {
+    return 49;
+  } else {
+    return 0;
+  }
+}
+
+
+
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
+  
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Simulate submission (in real case: send to API)
+    console.log({ 
+      orderId: orderDetails?.formatted_order_id || orderDetails?.id, 
+      rating, 
+      comment 
+    });
+    
+    setSubmitted(true);
+  };
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -49,22 +80,29 @@ export default function CheckoutPage() {
 
   const handlePincodeChange = async (e) => {
     const pincode = e.target.value;
-    setForm(prev => ({ ...prev, zip: pincode }));
+    setForm(prev => ({ ...prev, pincode }));
 
     if (pincode.length === 6) {
       try {
-        const response = await fetch('/src/data.json');
-        const data = await response.json();
-        const pincodeInfo = data.Pincodes.find(p => p.Pincode === pincode);
+        // Use backend API to fetch pincode data
+        const response = await fetch(`http://localhost:3001/api/pincodes/${pincode}`);
         
-        if (pincodeInfo) {
-          setPincodeData(pincodeInfo);
-          setForm(prev => ({
-            ...prev,
-            city: pincodeInfo.City,
-            state: pincodeInfo.State,
-            country: 'India'
-          }));
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            const pincodeInfo = data[0]; // Take first result
+            setPincodeData(pincodeInfo);
+            setForm(prev => ({
+              ...prev,
+              city: pincodeInfo.District || pincodeInfo.Name,
+              state: pincodeInfo.State,
+              country: 'India'
+            }));
+            setError(''); // Clear any previous errors
+          } else {
+            setError('Invalid PIN code. Please enter a valid 6-digit PIN code.');
+            setPincodeData(null);
+          }
         } else {
           setError('Invalid PIN code. Please enter a valid 6-digit PIN code.');
           setPincodeData(null);
@@ -72,9 +110,11 @@ export default function CheckoutPage() {
       } catch (error) {
         console.error('Error fetching PIN code data:', error);
         setError('Error fetching PIN code data. Please try again.');
+        setPincodeData(null);
       }
-    } else if (pincode.length > 0) {
+    } else if (pincode.length > 0 && pincode.length < 6) {
       setError('PIN code must be 6 digits');
+      setPincodeData(null);
     } else {
       setError('');
       setPincodeData(null);
@@ -100,12 +140,14 @@ export default function CheckoutPage() {
     return subtotal - subtotal * appliedPromo.discount;
   };
 
-  const getFinalTotal = () => {
-    const subtotal = getDiscountedSubtotal();
-    // const gst = getGSTAmount();
-    // return subtotal + gst + SHIPPING_COST;
-    return subtotal + SHIPPING_COST;
-  };
+  const subtotal = getDiscountedSubtotal();
+const shippingCost = getShippingCost(subtotal);
+const getFinalTotal = () => {
+  return subtotal + shippingCost;
+};
+
+  // return subtotal + shippingCost; // + gst if needed
+
 
   const isFormValid =
     form.name &&
@@ -131,13 +173,45 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      // Simulate payment gateway
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create or get customer
+      const customerData = {
+        name: form.name,
+        email: form.email,
+        mobile: form.phone,
+        address: `${form.house_number}, ${form.area}, ${form.landmark}, ${form.city}, ${form.state}, ${form.country} - ${form.pincode}`,
+      };
+
+      const customer = await createOrGetCustomer(customerData);
+
+      // Prepare order data
+      const orderData = {
+        customer_id: customer.id,
+        total_amount: getFinalTotal(),
+        address: customerData.address,
+        notes: `Phone: ${form.phone}`,
+        items: cartItems.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      };
+
+      // Create order
+      const order = await createOrder(orderData);
+      
+      // Store customer ID and order ID for future reference
+      localStorage.setItem('customerId', customer.id);
+      localStorage.setItem('lastOrderId', order.id);
+      
+      // Store order details for display
+      setOrderDetails(order);
+      
       setPaymentSuccess(true);
       clearCart();
       // Clear the applied promo from localStorage
       localStorage.removeItem('appliedPromo');
     } catch (err) {
+      console.error('Payment error:', err);
       setError('Payment failed. Please try again.');
     } finally {
       setIsProcessing(false);
@@ -146,24 +220,82 @@ export default function CheckoutPage() {
 
   if (paymentSuccess) {
     return (
-      <div className="max-w-xl mx-auto p-6 text-center">
-        <h1 className="text-3xl font-bold text-green-700 mb-4">
-          Payment Successful!
+      <div className="max-w-xl mx-auto text-center">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700 mb-4">
+          🎉 Your Order is Confirmed !
         </h1>
-        <p className="text-lg mb-4">Thank you for your order, {form.name}.</p>
-        <button
-          onClick={() => navigate('/')}
-          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-        >
-          Continue Shopping
-        </button>
+        <p className="text-base sm:text-lg text-gray-600 mb-4">Thank you <span className='text-black font-bold'>{form.name}</span> for shopping with Herbalmg. Your order has been placed succesfully!</p>
+        <p className="text-gray-600 mb-6">
+          You will receive a confirmation email or SMS shortly with your order details.
+        </p>
+        <div className="bg-white px-6 py-3 rounded-md shadow-md border text-gray-800 font-mono mb-6">
+        Order ID: <span className="font-semibold text-green-700">
+          {orderDetails?.formatted_order_id || orderDetails?.id || 'Loading...'}
+        </span>
+      </div>
+
+       <div className="w-full max-w-md mx-auto">
+  {!submitted ? (
+    <form
+      onSubmit={handleSubmit}
+      className="w-full bg-white p-6 rounded-lg shadow-md text-left"
+    >
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 text-center">
+        Rate your experience
+      </h2>
+
+      {/* Star Rating */}
+      <div className="flex items-center space-x-2 mb-4 justify-center gap-3">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setRating(star)}
+            className={`text-2xl ${
+              star <= rating ? 'text-yellow-400' : 'text-gray-300'
+            } hover:scale-110 transition-transform`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+
+      <button type="submit" className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition">
+        Submit
+      </button>
+    </form>
+  ) : (
+    <div className="mt-6 text-green-700 text-lg font-semibold text-center">
+      🎉 Thank you for your feedback!
+    </div>
+  )}
+</div>
+
+
+        <div className="w-full max-w-md mx-auto mt-6 space-y-3 flex gap-9">
+  <button
+    onClick={() => navigate('/order-history')}
+    className=" w-50 h-10 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition"
+  >
+    View Order History
+  </button>
+  <button
+    onClick={() => navigate('/')}
+    className=" w-50 h-10 bg-orange-600 text-white py-2 px-4 rounded hover:bg-orange-700 transition"
+  >
+    Continue Shopping
+  </button>
+</div>
+
+
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-green-700 mb-6 text-center">
+    <div className="max-w-4xl mx-auto
+    ">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700 mb-6 text-center">
         Checkout
       </h1>
 
@@ -178,7 +310,7 @@ export default function CheckoutPage() {
         className="grid md:grid-cols-2 gap-6 bg-white p-6 shadow rounded"
       >
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold mb-2">Shipping Information</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">Shipping Information</h2>
           <input
             name="name"
             type="text"
@@ -208,8 +340,8 @@ export default function CheckoutPage() {
           />
           <input
             name="house_number"
-            placeholder="House no. / Apartment"
-            value={form.address}
+            placeholder="House no."
+            value={form.house_number}
             onChange={handleInput}
             className="w-full border p-2 rounded"
             required
@@ -220,9 +352,9 @@ export default function CheckoutPage() {
               <input
                 name="area"
                 type="text"
-                placeholder="Area / locality"
+                placeholder="Area"
                 value={form.area}
-                onChange={handlePincodeChange}
+                onChange={handleInput}
                 className="w-full border p-2 rounded"
                 required
               />
@@ -248,13 +380,13 @@ export default function CheckoutPage() {
                 onChange={handlePincodeChange}
                 className="w-full border p-2 rounded"
                 required
-                maxLength={6}
+                // maxLength={6}
               />
-              {pincodeData && (
+              {/* {pincodeData && (
                 <p className="text-sm text-green-600 mt-1">
-                  {pincodeData.City}, {pincodeData.State}
+                  {pincodeData.District || pincodeData.Name}, {pincodeData.State}
                 </p>
-              )}
+              )} */}
             </div>
             <input
               name="city"
@@ -264,7 +396,7 @@ export default function CheckoutPage() {
               onChange={handleInput}
               className="w-full border p-2 rounded"
               required
-              readOnly={!!pincodeData}
+              // readOnly={!!pincodeData}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -276,7 +408,7 @@ export default function CheckoutPage() {
               onChange={handleInput}
               className="w-full border p-2 rounded"
               required
-              readOnly={!!pincodeData}
+              // readOnly={!!pincodeData}
             />
             <input
               name="country"
@@ -286,13 +418,13 @@ export default function CheckoutPage() {
               onChange={handleInput}
               className="w-full border p-2 rounded"
               required
-              readOnly={!!pincodeData}
+              // readOnly={!!pincodeData}
             />
           </div>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold mb-2">Order Summary</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">Order Summary</h2>
           <div className="border rounded p-4">
             <ul className="divide-y">
               {cartItems.map((item) => (
@@ -331,11 +463,12 @@ export default function CheckoutPage() {
               </div> */}
 
               <div className="flex justify-between text-gray-600">
-                <span>Shipping Cost:</span>
-                <span>₹{SHIPPING_COST.toFixed(2)}</span>
-              </div>
+  <span>Shipping Cost:</span>
+  <span>₹{shippingCost.toFixed(2)}</span>
+</div>
 
-              <div className="flex justify-between text-lg font-bold pt-2 border-t">
+
+              <div className="flex justify-between text-base sm:text-lg font-bold pt-2 border-t">
                 <span>Total</span>
                 <span>₹{getFinalTotal().toFixed(2)}</span>
               </div>
@@ -355,7 +488,7 @@ export default function CheckoutPage() {
             <div className="mt-4 text-sm">
               {form.city.toLowerCase() === 'jaipur' ? (
                 <p className="text-green-600">
-                  Note: For Jaipur location only COD available
+                  Note: For Jaipur location COD available
                 </p>
               ) : (
                 <p className="text-red-600">

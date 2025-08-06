@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import toast, { Toaster } from "react-hot-toast";
+import { generateProductUrl } from '../utils/productUtils';
 
 const ProductCard = ({ product }) => {
   const { images, name, actual_price, selling_price } = product;
@@ -34,11 +35,13 @@ const ProductCard = ({ product }) => {
   return (
     <>
       <Toaster position="top-right" />
-      
-      <Link to={`/product/${product.id}`} className="block">
-        <div className="relative bg-white rounded-lg shadow-md overflow-hidden w-full max-w-[90vw] sm:max-w-[300px] md:max-w-[340px] lg:max-w-[360px] xl:max-w-[400px] group transition-transform duration-300 hover:scale-[1.02] mx-auto">
+      <Link to={generateProductUrl(product)} className="block">
+        <div className="relative overflow-hidden 
+          w-[calc(33.333vw-16px)] sm:w-48 md:w-56 lg:w-[200px]
+          h-[200px] sm:h-[300px] md:h-[320px]
+          mx-auto flex flex-col cursor-pointer"
+        >
 
-          
           {/* Discount Badge */}
           {hasDiscount && (
             <div className="absolute top-2 left-2 bg-orange-400 text-black text-xs font-semibold px-2 py-1 rounded z-10">
@@ -47,38 +50,39 @@ const ProductCard = ({ product }) => {
           )}
 
           {/* Product Image */}
-          <div className="flex justify-center items-center h-40 sm:h-44 md:h-48 lg:h-52 xl:h-56 overflow-hidden">
+          <div className="flex justify-center items-center h-[120px] sm:h-[140px] md:h-[160px] overflow-hidden">
             <img
               src={image}
               alt={name}
               loading="lazy"
-              className="h-full w-auto object-contain transform transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-auto object-contain"
             />
           </div>
 
           {/* Product Info */}
-          <div className="p-3 sm:p-4">
-            <h3 className="text-base sm:text-lg font-medium text-gray-800 line-clamp-2">{name}</h3>
+          <div className="flex flex-col justify-between flex-grow sm:p-3">
+            <h3 className="text-xs sm:text-sm md:text-base text-gray-800 line-clamp-2">
+              {name}
+            </h3>
 
-            {/* Price Info */}
-            <div className="mt-2 mb-4 flex flex-col">
-              {sellingPriceNum > 0 ? (
-                <span className="text-md sm:text-lg font-bold text-green-700">
-                  ₹{sellingPriceNum.toFixed(2)}
-                </span>
-              ) : (
-                <span className="text-md sm:text-lg font-bold text-gray-500">N/A</span>
-              )}
-              {hasDiscount && actualPriceNum > 0 && (
-                <span className="text-sm text-gray-400">
-                  MRP: <span className="line-through">₹{actualPriceNum.toFixed(2)}</span>
-                </span>
-              )}
-            </div>
+            <div className="mt-1 mb-2 flex flex-col">
+  {sellingPriceNum > 0 ? (
+    <span className="text-sm sm:text-base font-bold text-green-700">
+      ₹{sellingPriceNum.toFixed(2)}
+    </span>
+  ) : (
+    <span className="text-sm sm:text-base font-bold text-gray-500">N/A</span>
+  )}
+  {hasDiscount && actualPriceNum > 0 && (
+    <span className="text-xs text-gray-400 line-through">
+      ₹{actualPriceNum.toFixed(2)}
+    </span>
+  )}
+</div>
 
-            {/* Add to Cart Button */}
+
             <button
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded transition duration-200"
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold py-1.5 sm:py-2 px-2 sm:px-4 rounded transition duration-200"
               onClick={handleAddToCart}
             >
               Add to Cart
@@ -92,19 +96,53 @@ const ProductCard = ({ product }) => {
 
 export default ProductCard;
 
+// Updated ProductCardScrollable
+export const ProductCardScrollable = ({ id, image, name, actualPrice, sellingPrice }) => {
+  const { addToCart, cartItems } = useCart();
+  const navigate = useNavigate();
+  const isInCart = cartItems.some(item => item.id === id);
 
-export const ProductCardScrollable = ({ image, name, actualPrice, sellingPrice }) => {
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({
+      id,
+      name,
+      price: sellingPrice,
+      image,
+      actual_price: actualPrice,
+    });
+    toast.success("Added to cart!");
+  };
+
+  const handleCardClick = () => {
+    // For ProductCardScrollable, we only have id, so use the simple product route
+    navigate(`/product/${id}`);
+  };
+
   return (
-    <div className="w-64 p-4 bg-white rounded-lg shadow-md flex-shrink-0 transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-      <img src={image} alt={name} className="h-40 w-full object-cover rounded-md mb-4" />
-      <h2 className="text-lg font-semibold">{name}</h2>
-      <div className="flex items-center gap-2 my-2">
-        <span className="text-gray-500 line-through text-sm">₹{actualPrice}</span>
-        <span className="text-red-600 font-bold">₹{sellingPrice}</span>
+    <div 
+      className="w-[calc(33.333vw-16px)] sm:w-48 md:w-56 lg:w-50  flex-shrink-0 cursor-pointer flex flex-col h-[200px] sm:h-[300px] md:h-[300px]"
+      onClick={handleCardClick}
+    >
+      <img src={image} alt={name} className="h-24 sm:h-32 md:h-40 w-auto object-cover rounded-md mb-3 sm:mb-4" />
+      
+      <h2 className="text-xs sm:text-sm md:text-base line-clamp-2">{name}</h2>
+      
+      <div className="flex items-center gap-1 sm:gap-2 my-2">
+        <span className="text-green-600 font-bold text-sm sm:text-base">₹{sellingPrice}</span>
+        <span className="text-gray-500 line-through text-xs sm:text-sm">₹{actualPrice}</span>
       </div>
-      <button className="mt-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200 w-full">
-        Add to Cart
-      </button>
+
+      <div className="mt-auto">
+        <button
+          className="bg-[#ff8f00] text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded hover:bg-green-700 transition duration-200 w-full"
+          onClick={handleAddToCart}
+        >
+          {'Add to Cart'}
+        </button>
+      </div>
     </div>
   );
 };
+

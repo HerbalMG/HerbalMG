@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import "./LogoCircles.css";
 import { useNavigate } from "react-router-dom";
+import { createSlug } from "../utils/slugUtils";
 
 const Brands = () => {
   const scrollRef = useRef(null);
@@ -11,13 +12,13 @@ const Brands = () => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch data
+  // Fetch top brands only
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch("http://localhost:3001/api/brand")
+    fetch("http://localhost:3001/api/brand/top")
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch brands");
+        if (!res.ok) throw new Error("Failed to fetch top brands");
         return res.json();
       })
       .then((data) => {
@@ -85,8 +86,8 @@ const Brands = () => {
 
   return (
     <div className="relative mt-3 max-w-full md:max-w-7xl mx-auto">
-<h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 text-green-700">
-        Our Top Brands
+<h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-6 text-black">
+        Shop by Brands
       </h1>
 
       {/* Scrollable area */}
@@ -117,7 +118,7 @@ const Brands = () => {
               role="img"
               aria-label={`Brand logo of ${brand.name}`}
               title={brand.name}
-              onClick={() => navigate(`/brand/${brand.id}`)}
+              onClick={() => navigate(`/brand/${brand.slug || createSlug(brand.name)}`)}
             >
               <img
                 src={brand.logo_url}
@@ -128,7 +129,13 @@ const Brands = () => {
             </div>
           ))
         ) : (
-          <div className="text-gray-400 text-center">No brands available</div>
+          <div className="flex items-center justify-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 w-full">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🏷️</div>
+              <h3 className="text-lg font-medium text-gray-600 mb-2">No Brands Available</h3>
+              <p className="text-gray-500 text-sm max-w-md">We're working on partnering with trusted brands. Check back soon for quality products from renowned manufacturers!</p>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -140,7 +147,8 @@ export default Brands;
 
 
 export function PopularBrand() {
-  // Dummy data for demonstration
+  const navigate = useNavigate();
+
   const dummyBrands = [
     { id: 1, name: "Herbal Life", logo_url: "https://via.placeholder.com/100?text=Brand+1" },
     { id: 2, name: "AyurCare", logo_url: "https://via.placeholder.com/100?text=Brand+2" },
@@ -148,32 +156,28 @@ export function PopularBrand() {
     { id: 4, name: "GreenRoots", logo_url: "https://via.placeholder.com/100?text=Brand+4" },
     { id: 5, name: "AyushWell", logo_url: "https://via.placeholder.com/100?text=Brand+5" },
     { id: 6, name: "OrganicVeda", logo_url: "https://via.placeholder.com/100?text=Brand+6" },
-    { id: 7, name: "OrganicVeda", logo_url: "https://via.placeholder.com/100?text=Brand+6" },
-    { id: 8, name: "OrganicVeda", logo_url: "https://via.placeholder.com/100?text=Brand+6" },
   ];
 
+  const createSlug = (name) => name.toLowerCase().replace(/\s+/g, '-');
+
   return (
-    <div className="relative mt-3 max-w-full md:max-w-7xl mx-auto px-4 rounded-1xl">
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 text-green-700">
+    <div className="relative mt-3 max-w-full md:max-w-7xl mx-auto rounded-1xl">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-6 text-black">
         Popular Brands
       </h1>
 
-      <div
-        className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth"
-        style={{ scrollSnapType: "x mandatory" }}
-        aria-label="Popular brands of our site."
-      >
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
         {dummyBrands.map((brand) => (
           <div
             key={brand.id}
-            className="flex-shrink-0 w-24 sm:w-28 md:w-32 text-center"
-            style={{ scrollSnapAlign: "center" }}
+            className="text-center cursor-pointer"
+            onClick={() => navigate(`/brand/${brand.slug || createSlug(brand.name)}`)}
           >
-            <div className="w-full h-24 sm:h-28 md:h-32 bg-white border shadow-md flex items-center justify-center transition-transform hover:scale-90 cursor-pointer rounded-2xl">
+            <div className="w-full h-20 bg-white border shadow-md flex items-center justify-center transition-transform hover:scale-90 rounded-2xl">
               <img
                 src={brand.logo_url}
                 alt={brand.name}
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                className="w-12 h-12 object-contain"
                 loading="lazy"
               />
             </div>
@@ -184,5 +188,7 @@ export function PopularBrand() {
     </div>
   );
 }
+
+
 
 

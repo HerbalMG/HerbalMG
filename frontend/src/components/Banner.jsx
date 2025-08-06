@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from 'react-router-dom';
+import { generateProductUrl } from '../utils/productUtils';
 
 // export default function Banner() {
 //   const [banners, setBanners] = useState([]);
@@ -204,12 +205,14 @@ export function Banners({ banners }) {
   }
 
   // Debug: log the image URL
-  console.log('Banner image URL:', bannerData.image_url);
+  // console.log('Banner image URL:', bannerData.image_url);
 
   // If product_id exists, link to product page; else, use link or just show image
   const handleClick = () => {
     if (bannerData.product_id) {
-      navigate(`/product/${bannerData.product_id}`);
+      // Use product slug if available, otherwise fallback to ID
+      const productUrl = bannerData.product_slug ? `/product/${bannerData.product_slug}` : `/product/${bannerData.product_id}`;
+      navigate(productUrl);
     } else if (bannerData.link) {
       window.open(bannerData.link, '_blank', 'noopener');
     }
@@ -320,14 +323,14 @@ export function Banners({ banners }) {
 
 
 
-const images = [
-  '/images/img1.jpg',
-  '/images/img2.jpg',
-  '/images/img3.jpg',
-  '/images/img4.jpg',
-  '/images/img5.jpg',
-  '/images/img6.jpg',
-];
+// const images = [
+//   '/images/img1.jpg',
+//   '/images/img2.jpg',
+//   '/images/img3.jpg',
+//   '/images/img4.jpg',
+//   '/images/img5.jpg',
+//   '/images/img6.jpg',
+// ];
 
 export default function BannerTop ({ banners }) {
   const navigate = useNavigate();
@@ -430,7 +433,7 @@ export default function BannerTop ({ banners }) {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-6">
+    <div className="w-full max-w-7xl mx-auto py-6">
       <div
         className={`grid gap-4 ${
           itemsPerPage === 1 ? 'grid-cols-1' : 'grid-cols-3'
@@ -443,11 +446,13 @@ export default function BannerTop ({ banners }) {
         onMouseLeave={handleMouseLeave}
       >
         {visibleBanners.map((banner, idx) => {
-          console.log('Banner:', banner); // Debug: log each banner
+          // console.log('Banner:', banner); // Debug: log each banner
           const handleClick = () => {
-            console.log('Clicked banner:', banner); // Debug: log click event
+            // console.log('Clicked banner:', banner); // Debug: log click event
             if (banner.product_id) {
-              navigate(`/product/${banner.product_id}`);
+              // Use product slug if available, otherwise fallback to ID
+              const productUrl = banner.product_slug ? `/product/${banner.product_slug}` : `/product/${banner.product_id}`;
+              navigate(productUrl);
             } else if (banner.link) {
               window.open(banner.link, '_blank', 'noopener');
             }

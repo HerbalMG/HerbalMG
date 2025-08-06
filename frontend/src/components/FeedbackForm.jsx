@@ -46,7 +46,7 @@ const FeedbackForm = () => {
 
   return (
     <div className="mt-16 max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-blue-600 mb-4 text-center">✨ Share Your HerbalMG Story</h2>
+      <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-600 mb-4 text-center">✨ Share Your HerbalMG Story</h2>
 
       {submitted ? (
         <div className="text-green-600 font-medium text-center">Thank you for your feedback!</div>

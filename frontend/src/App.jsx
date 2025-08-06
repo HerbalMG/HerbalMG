@@ -12,6 +12,17 @@ import { FaWhatsapp } from "react-icons/fa";
 
 
 function App() {
+
+  const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFlipped((prev) => !prev);
+    }, 3000); // Flip every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,22 +56,36 @@ function App() {
         <div className="min-h-screen">
           <Navbar />
            <GlobalLoader />
-          <main className="container mx-auto px-4 py-8">
+          <main className="container mx-auto px-2 py-2">
             <AppRoutes/>
           </main>
           <Footer />
         </div>
     </CartProvider>
 
-    <a
-        href="https://wa.me/3434534343"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-all z-50"
-        aria-label="Contact us on WhatsApp"
+   <a
+      href="https://wa.me/3434534343"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-4 w-16 h-16 perspective z-50"
+      aria-label="Contact us on WhatsApp"
+    >
+      <div
+        className={`w-full h-full transition-transform duration-500 transform-style-preserve-3d relative ${
+          flipped ? "rotate-y-180" : ""
+        }`}
       >
-        <FaWhatsapp size={24} />
-      </a>
+        {/* Front side (WhatsApp icon) */}
+        <div className="absolute w-full h-full bg-green-500 text-white p-4 rounded-full shadow-lg flex items-center justify-center backface-hidden hover:bg-green-600">
+          <FaWhatsapp size={40} />
+        </div>
+
+        {/* Back side (Text) */}
+        <div className="absolute w-full h-full bg-green-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center rotate-y-180 backface-hidden">
+          <span className="text-sm text-center">Connect with us</span>
+        </div>
+      </div>
+    </a>
     </div>
   );
 }
